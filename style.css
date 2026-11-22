@@ -472,3 +472,25 @@ body.focus-mode-active #mini-player {
 .focus-art-glow:hover {
   transform: scale(1.02);
 }
+
+/* สถานะปุ่มเลือกเวลา Auto-Hide */
+.autohide-opt-btn.active {
+  border-color: var(--accent);
+  background: rgba(111, 168, 232, 0.15);
+  color: var(--text-primary);
+}
+
+/* เอฟเฟกต์ Auto-Hide UI ในโหมดโฟกัส */
+#focus-screen-overlay .focus-ui-chrome {
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+#focus-screen-overlay.focus-ui-idle {
+  cursor: none;
+}
+
+#focus-screen-overlay.focus-ui-idle .focus-ui-chrome {
+  opacity: 0 !important;
+  pointer-events: none;
+  transform: translateY(4px);
+}

@@ -18,6 +18,26 @@ let isFocusLyricsVisible = true;
 let isCompactPlayer = false;
 let activeLyricIndex = -1;
 
+// Focus Auto-Hide UI State (ค่าเริ่มต้น 30 วินาที: 0 = ปิด, 30 = 30วิ, 60 = 1นาที)
+let focusAutoHideSeconds = (() => {
+  try {
+    const saved = localStorage.getItem('ena_focus_autohide');
+    if (saved !== null && ['0', '30', '60'].includes(saved)) return Number(saved);
+  } catch (e) {}
+  return 30;
+})();
+let focusIdleTimer = null;
+
+// Crossfade State (ค่าเริ่มต้นเปิดใช้งาน 1.8 วินาที)
+let isCrossfadeEnabled = (() => {
+  try {
+    const saved = localStorage.getItem('ena_crossfade');
+    if (saved !== null) return saved === 'true';
+  } catch (e) {}
+  return true;
+})();
+const CROSSFADE_DURATION_SEC = 1.8;
+
 // Sync Helper State (ตัวช่วยจับเวลาทำเนื้อเพลงซิงก์)
 let isSyncHelperOpen = false;
 let helperBlocks = [];
@@ -68,8 +88,14 @@ function shuffleArray(array) {
   return copy;
 }
 
-// ==================== UNIFIED AUDIO VOLUME ENGINE ====================
-let realAudioPlayer = new Audio();
+// ==================== DUAL-DECK AUDIO & CROSSFADE ENGINE ====================
+const deckA = new Audio();
+const deckB = new Audio();
+let realAudioPlayer = deckA;
+let activeDeckFade = 1;      // ระดับการเฟดของเพลงหลักปัจจุบัน (0 -> 1)
+let activeFadeInterval = null;
+let outgoingFadeInterval = null;
+
 let audioCtx = null;
 let chordInterval = null;
 let synthClockInterval = null;
@@ -77,12 +103,16 @@ let synthElapsedSeconds = 0;
 let noiseNode = null;
 let masterGain = null;
 
-// จุดเดียวสำหรับตั้งความดังเสียง (ครอบคลุมทั้งเพลงจริง, โหมด Synth และ Sleep Timer Fade)
-function applyMasterVolume() {
+function getMasterTargetVolume() {
   const baseVol = isMuted ? 0 : currentVolume;
-  const effectiveVol = Math.max(0, Math.min(1, baseVol * sleepFadeMultiplier));
+  return Math.max(0, Math.min(1, baseVol * sleepFadeMultiplier));
+}
 
-  realAudioPlayer.volume = effectiveVol;
+// จุดเดียวสำหรับตั้งความดังเสียง (ครอบคลุมทั้งเพลงจริง, Crossfade, โหมด Synth และ Sleep Timer Fade)
+function applyMasterVolume() {
+  const effectiveVol = getMasterTargetVolume();
+
+  realAudioPlayer.volume = Math.max(0, Math.min(1, effectiveVol * activeDeckFade));
 
   if (masterGain && audioCtx) {
     masterGain.gain.setTargetAtTime(effectiveVol * 0.32, audioCtx.currentTime, 0.04);
@@ -94,7 +124,7 @@ function initAudioContext() {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     audioCtx = new AudioContext();
     masterGain = audioCtx.createGain();
-    masterGain.gain.value = (isMuted ? 0 : currentVolume) * sleepFadeMultiplier * 0.32;
+    masterGain.gain.value = getMasterTargetVolume() * 0.32;
     masterGain.connect(audioCtx.destination);
   }
   if (audioCtx.state === 'suspended') {
@@ -102,8 +132,32 @@ function initAudioContext() {
   }
 }
 
-function stopAmbientSound() {
-  realAudioPlayer.pause();
+function clearAllCrossfadeTimers() {
+  if (activeFadeInterval) {
+    clearInterval(activeFadeInterval);
+    activeFadeInterval = null;
+  }
+  if (outgoingFadeInterval) {
+    clearInterval(outgoingFadeInterval);
+    outgoingFadeInterval = null;
+  }
+}
+
+function stopDeckImmediately(deck) {
+  try {
+    deck.pause();
+  } catch (e) {}
+}
+
+function stopAmbientSound(preserveCrossfade = false) {
+  if (!preserveCrossfade) {
+    clearAllCrossfadeTimers();
+    stopDeckImmediately(deckA);
+    stopDeckImmediately(deckB);
+    activeDeckFade = 1;
+  } else {
+    realAudioPlayer.pause();
+  }
 
   if (chordInterval) {
     clearInterval(chordInterval);
@@ -122,11 +176,121 @@ function stopAmbientSound() {
   }
 }
 
-function startAmbientSound(track) {
-  stopAmbientSound();
+// ผูก Event ถาวรกับทั้ง 2 Deck (ไม่ใช้ .ontimeupdate / .onended ที่ถูกเขียนทับได้)
+[deckA, deckB].forEach((deck) => {
+  deck.addEventListener('timeupdate', () => {
+    if (deck !== realAudioPlayer) return;
+    const total = getEffectiveDuration();
+    updateSeekUI(deck.currentTime, total);
+    updateSyncedLyricsHighlight(deck.currentTime);
+    if (isPlaying) {
+      maybeSaveResumeState(deck.currentTime);
+    }
+
+    // เริ่ม Crossfade ล่วงหน้าอัตโนมัติเมื่อใกล้จบเพลง
+    if (
+      isCrossfadeEnabled &&
+      isPlaying &&
+      repeatMode !== 'one' &&
+      sleepTimerMode !== 'end' &&
+      !deck._autoCrossfadeTriggered &&
+      deck.duration &&
+      isFinite(deck.duration) &&
+      deck.duration > CROSSFADE_DURATION_SEC + 2 &&
+      deck.duration - deck.currentTime <= CROSSFADE_DURATION_SEC
+    ) {
+      deck._autoCrossfadeTriggered = true;
+      nextTrack(true, true);
+    }
+  });
+
+  deck.addEventListener('loadedmetadata', () => {
+    if (deck !== realAudioPlayer) return;
+    updateSeekUI(deck.currentTime, getEffectiveDuration());
+  });
+
+  deck.addEventListener('error', () => {
+    if (deck !== realAudioPlayer || !currentTrack || !currentTrack.audioUrl) return;
+    isPlaying = false;
+    updatePlayPauseButtonUI();
+    refreshPlayIcons();
+    showToast('ไม่พบไฟล์เสียง: ' + currentTrack.audioUrl);
+  });
+
+  deck.addEventListener('ended', () => {
+    if (deck !== realAudioPlayer) return;
+    handleTrackEnded();
+  });
+});
+
+function startAmbientSound(track, useCrossfade = false) {
+  const isNewRealTrack = track.audioUrl && track.audioUrl.trim() !== "";
+  const prevDeck = realAudioPlayer;
+  const wasPrevPlaying = !prevDeck.paused && prevDeck.src && prevDeck.currentTime > 0;
+  const shouldCrossfade = useCrossfade && isCrossfadeEnabled && isNewRealTrack && wasPrevPlaying;
+
+  if (shouldCrossfade) {
+    stopAmbientSound(true);
+    clearAllCrossfadeTimers();
+
+    const outgoingDeck = prevDeck;
+    const incomingDeck = prevDeck === deckA ? deckB : deckA;
+    realAudioPlayer = incomingDeck;
+    incomingDeck._autoCrossfadeTriggered = false;
+
+    const startOutgoingVol = outgoingDeck.volume;
+    const steps = 30;
+    const stepMs = (CROSSFADE_DURATION_SEC * 1000) / steps;
+    let stepCount = 0;
+
+    outgoingFadeInterval = setInterval(() => {
+      stepCount++;
+      const ratio = Math.max(0, 1 - stepCount / steps);
+      outgoingDeck.volume = Math.max(0, Math.min(1, startOutgoingVol * ratio));
+      if (stepCount >= steps) {
+        clearInterval(outgoingFadeInterval);
+        outgoingFadeInterval = null;
+        stopDeckImmediately(outgoingDeck);
+      }
+    }, stepMs);
+
+    activeDeckFade = 0.02;
+    incomingDeck.src = track.audioUrl;
+    incomingDeck.currentTime = 0;
+    applyMasterVolume();
+
+    incomingDeck.play().then(() => {
+      let inStep = 0;
+      activeFadeInterval = setInterval(() => {
+        inStep++;
+        activeDeckFade = Math.min(1, inStep / steps);
+        applyMasterVolume();
+        if (inStep >= steps) {
+          clearInterval(activeFadeInterval);
+          activeFadeInterval = null;
+          activeDeckFade = 1;
+          applyMasterVolume();
+        }
+      }, stepMs);
+    }).catch(err => {
+      activeDeckFade = 1;
+      applyMasterVolume();
+      if (err && err.name === 'AbortError') return;
+      isPlaying = false;
+      updatePlayerUI();
+      refreshPlayIcons();
+      showToast('เล่นเพลงไม่ได้ — ตรวจสอบไฟล์: ' + track.audioUrl);
+    });
+    return;
+  }
+
+  // กรณีเล่นปกติ / กด Play ต่อจาก Pause / โหมด Synth
+  stopAmbientSound(false);
+  activeDeckFade = 1;
   applyMasterVolume();
 
-  if (track.audioUrl && track.audioUrl.trim() !== "") {
+  if (isNewRealTrack) {
+    realAudioPlayer._autoCrossfadeTriggered = false;
     if (!realAudioPlayer.src.endsWith(encodeURI(track.audioUrl))) {
       realAudioPlayer.src = track.audioUrl;
     }
@@ -138,7 +302,6 @@ function startAmbientSound(track) {
       refreshPlayIcons();
       showToast('เล่นเพลงไม่ได้ — ตรวจสอบไฟล์: ' + track.audioUrl);
     });
-    realAudioPlayer.onended = handleTrackEnded;
     return;
   }
 
@@ -196,7 +359,6 @@ function startAmbientSound(track) {
   playChord();
   chordInterval = setInterval(playChord, 4000);
 
-  // ตัวนับเวลาจำลองสำหรับโหมด Synth เพื่อให้แถบกรอ, เนื้อเพลงซิงก์ และ Sleep Timer ทำงานสมบูรณ์
   const totalSec = parseDurationToSeconds(track.duration) || 180;
   synthClockInterval = setInterval(() => {
     if (!isPlaying) return;
@@ -210,6 +372,26 @@ function startAmbientSound(track) {
       handleTrackEnded();
     }
   }, 500);
+}
+
+// ==================== CROSSFADE SETTINGS ====================
+function toggleCrossfade() {
+  isCrossfadeEnabled = !isCrossfadeEnabled;
+  updateCrossfadeUI();
+  try { localStorage.setItem('ena_crossfade', String(isCrossfadeEnabled)); } catch (e) {}
+  showToast(isCrossfadeEnabled ? 'เปิด Crossfade เปลี่ยนเพลงนุ่มนวลแล้ว' : 'ปิด Crossfade (เปลี่ยนเพลงทันที)');
+}
+
+function updateCrossfadeUI() {
+  const btn = document.getElementById('btn-crossfade-toggle');
+  if (!btn) return;
+  btn.textContent = isCrossfadeEnabled ? 'ON' : 'OFF';
+  btn.setAttribute('aria-pressed', String(isCrossfadeEnabled));
+  btn.classList.toggle('border-[var(--accent)]', isCrossfadeEnabled);
+  btn.classList.toggle('xo-bg-accent-15', isCrossfadeEnabled);
+  btn.classList.toggle('text-[var(--accent)]', isCrossfadeEnabled);
+  btn.classList.toggle('border-[var(--border-subtle)]', !isCrossfadeEnabled);
+  btn.classList.toggle('text-[var(--text-secondary)]', !isCrossfadeEnabled);
 }
 
 // ==================== VOLUME CONTROLS ====================
@@ -564,7 +746,6 @@ function updateSeekUI(currentSec, totalSec) {
     totEl.textContent = formatTime(safeTotal);
   }
 
-  // ซิงก์แถบเวลาในโหมด Focus เต็มจอ
   const fSlider = document.getElementById('focus-seek-slider');
   const fCur = document.getElementById('focus-current-time');
   const fTot = document.getElementById('focus-total-duration');
@@ -686,15 +867,6 @@ function updateSyncedLyricsHighlight(currentTime) {
     });
   }
 }
-
-realAudioPlayer.addEventListener('timeupdate', () => {
-  if (!realAudioPlayer.duration) return;
-  updateSeekUI(realAudioPlayer.currentTime, realAudioPlayer.duration);
-  updateSyncedLyricsHighlight(realAudioPlayer.currentTime);
-  if (isPlaying) {
-    maybeSaveResumeState(realAudioPlayer.currentTime);
-  }
-});
 
 // ==================== SYNC HELPER (เครื่องมือช่วยจับเวลาเนื้อเพลง) ====================
 function toggleSyncHelper() {
@@ -960,7 +1132,68 @@ function toggleLyricsPanel(forceState) {
   }
 }
 
-// ==================== FOCUS / AMBIENT SCREEN MODE ====================
+// ==================== FOCUS / AMBIENT SCREEN MODE & AUTO-HIDE UI ====================
+function setFocusAutoHideDelay(seconds) {
+  const num = Number(seconds);
+  focusAutoHideSeconds = [0, 30, 60].includes(num) ? num : 30;
+  try { localStorage.setItem('ena_focus_autohide', String(focusAutoHideSeconds)); } catch (e) {}
+  updateFocusAutoHideUI();
+  resetFocusIdleTimer();
+
+  const label = focusAutoHideSeconds === 0 ? 'ปิดการซ่อนอัตโนมัติ' : `ซ่อนปุ่มเมื่อนิ่ง ${focusAutoHideSeconds} วินาที`;
+  showToast(label);
+}
+
+function updateFocusAutoHideUI() {
+  const labelEl = document.getElementById('focus-autohide-label');
+  if (labelEl) {
+    labelEl.textContent = focusAutoHideSeconds === 0
+      ? 'ปิดอยู่'
+      : focusAutoHideSeconds === 60
+        ? '1 นาที'
+        : `${focusAutoHideSeconds} วินาที`;
+  }
+
+  document.querySelectorAll('.autohide-opt-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.autohide === String(focusAutoHideSeconds));
+  });
+}
+
+function resetFocusIdleTimer() {
+  const overlay = document.getElementById('focus-screen-overlay');
+  if (!overlay) return;
+
+  overlay.classList.remove('focus-ui-idle');
+  if (focusIdleTimer) {
+    clearTimeout(focusIdleTimer);
+    focusIdleTimer = null;
+  }
+
+  if (!isFocusMode || focusAutoHideSeconds <= 0) return;
+
+  const settingsModal = document.getElementById('settings-dropdown');
+  if (settingsModal && !settingsModal.classList.contains('hidden')) return;
+
+  focusIdleTimer = setTimeout(() => {
+    if (isFocusMode && focusAutoHideSeconds > 0) {
+      const modal = document.getElementById('settings-dropdown');
+      if (modal && !modal.classList.contains('hidden')) return;
+      overlay.classList.add('focus-ui-idle');
+    }
+  }, focusAutoHideSeconds * 1000);
+}
+
+function initFocusAutoHideListeners() {
+  const overlay = document.getElementById('focus-screen-overlay');
+  if (!overlay) return;
+
+  ['mousemove', 'mousedown', 'touchstart', 'wheel'].forEach(ev => {
+    overlay.addEventListener(ev, () => {
+      if (isFocusMode) resetFocusIdleTimer();
+    }, { passive: true });
+  });
+}
+
 function toggleFocusMode(forceState) {
   const overlay = document.getElementById('focus-screen-overlay');
   const btn = document.getElementById('btn-focus-toggle');
@@ -980,8 +1213,15 @@ function toggleFocusMode(forceState) {
   if (isFocusMode) {
     toggleLyricsPanel(false);
     syncFocusScreenUI();
+    resetFocusIdleTimer();
     const isReal = currentTrack.audioUrl && currentTrack.audioUrl.trim() !== "";
     updateSyncedLyricsHighlight(isReal ? realAudioPlayer.currentTime : synthElapsedSeconds);
+  } else {
+    overlay.classList.remove('focus-ui-idle');
+    if (focusIdleTimer) {
+      clearTimeout(focusIdleTimer);
+      focusIdleTimer = null;
+    }
   }
 }
 
@@ -1339,7 +1579,7 @@ function toggleSaveTrack(id) {
 }
 
 // ==================== PLAYER CONTROLS ====================
-function playTrackById(id, userInitiated = true) {
+function playTrackById(id, userInitiated = true, useCrossfade = true) {
   const track = getValidTracks().find(t => t.id === id);
   if (!track) return;
 
@@ -1353,14 +1593,14 @@ function playTrackById(id, userInitiated = true) {
     showToast('ยกเลิกตัวตั้งเวลา "จบเพลงนี้" เนื่องจากเปลี่ยนเพลง');
   }
 
-  realAudioPlayer.currentTime = 0;
+  const shouldCrossfade = useCrossfade && isPlaying && currentTrack !== null;
   synthElapsedSeconds = 0;
 
   currentTrack = track;
   isPlaying = true;
   updatePlayerUI();
   updateSeekUI(0, parseDurationToSeconds(track.duration));
-  startAmbientSound(track);
+  startAmbientSound(track, shouldCrossfade);
   refreshPlayIcons();
   updateMediaSession();
   saveResumeStateNow(0);
@@ -1371,27 +1611,29 @@ function togglePlayPause() {
   isPlaying = !isPlaying;
 
   if (isPlaying) {
-    startAmbientSound(currentTrack);
+    startAmbientSound(currentTrack, false);
   } else {
-    stopAmbientSound();
+    stopAmbientSound(false);
     saveResumeStateNow();
   }
   updatePlayPauseButtonUI();
   refreshPlayIcons();
 }
 
-function nextTrack(auto) {
+function nextTrack(auto, fromAutoCrossfade = false) {
   if (!currentTrack) return;
   const isAuto = auto === true;
   const next = pickNext(1, isAuto);
   if (!next) {
-    isPlaying = false;
-    stopAmbientSound();
-    updatePlayPauseButtonUI();
-    refreshPlayIcons();
+    if (!fromAutoCrossfade) {
+      isPlaying = false;
+      stopAmbientSound(false);
+      updatePlayPauseButtonUI();
+      refreshPlayIcons();
+    }
     return;
   }
-  playQueueTrack(next, !isAuto);
+  playQueueTrack(next, !isAuto, true);
 }
 
 function prevTrack() {
@@ -1408,13 +1650,13 @@ function prevTrack() {
     return;
   }
   const prev = pickNext(-1, false);
-  if (prev) playQueueTrack(prev, true);
+  if (prev) playQueueTrack(prev, true, true);
 }
 
 function closePlayer() {
   isPlaying = false;
   currentTrack = null;
-  stopAmbientSound();
+  stopAmbientSound(false);
   realAudioPlayer.currentTime = 0;
   synthElapsedSeconds = 0;
   clearResumeState();
@@ -1508,6 +1750,9 @@ function toggleSettingsMenu(e) {
     modal.classList.remove('hidden');
     if (backdrop) backdrop.classList.remove('hidden');
     updateSettingsThemeLabel();
+    updateFocusAutoHideUI();
+    updateCrossfadeUI();
+    if (isFocusMode) resetFocusIdleTimer();
   } else {
     closeSettingsModal();
   }
@@ -1518,6 +1763,7 @@ function closeSettingsModal() {
   const backdrop = document.getElementById('settings-modal-backdrop');
   if (modal) modal.classList.add('hidden');
   if (backdrop) backdrop.classList.add('hidden');
+  if (isFocusMode) resetFocusIdleTimer();
 }
 
 function updateSettingsThemeLabel() {
@@ -1726,7 +1972,7 @@ function setSleepTimer(option) {
       if (isPlaying) {
         togglePlayPause();
       } else {
-        stopAmbientSound();
+        stopAmbientSound(false);
       }
 
       sleepFadeMultiplier = 1;
@@ -1769,6 +2015,8 @@ function updateSleepCountdownDisplay() {
 let secretKeyBuffer = '';
 
 window.addEventListener('keydown', (e) => {
+  if (isFocusMode) resetFocusIdleTimer();
+
   if (e.defaultPrevented) return;
   if (e.ctrlKey || e.metaKey || e.altKey) return;
 
@@ -2057,7 +2305,7 @@ function pickNext(dir, auto) {
   return list[(n + list.length) % list.length];
 }
 
-function playQueueTrack(t, userInitiated = false) {
+function playQueueTrack(t, userInitiated = false, useCrossfade = true) {
   if (currentTrack && t.id === currentTrack.id) {
     if (userInitiated && sleepTimerMode === 'end') {
       setSleepTimer(0);
@@ -2065,19 +2313,19 @@ function playQueueTrack(t, userInitiated = false) {
     realAudioPlayer.currentTime = 0;
     synthElapsedSeconds = 0;
     isPlaying = true;
-    startAmbientSound(t);
+    startAmbientSound(t, false);
     updatePlayerUI();
     refreshPlayIcons();
     saveResumeStateNow(0);
     return;
   }
-  playTrackById(t.id, userInitiated);
+  playTrackById(t.id, userInitiated, useCrossfade);
 }
 
 function handleTrackEnded() {
   if (sleepTimerMode === 'end') {
     isPlaying = false;
-    stopAmbientSound();
+    stopAmbientSound(false);
     realAudioPlayer.currentTime = 0;
     synthElapsedSeconds = 0;
     updateSeekUI(0, getEffectiveDuration());
@@ -2097,7 +2345,7 @@ function handleTrackEnded() {
     }
     return;
   }
-  nextTrack(true);
+  nextTrack(true, false);
 }
 
 function toggleShuffle() {
@@ -2165,14 +2413,6 @@ function showToast(msg) {
   clearTimeout(showToast._t);
   showToast._t = setTimeout(() => el.classList.remove('show'), 3500);
 }
-
-realAudioPlayer.addEventListener('error', () => {
-  if (!currentTrack || !currentTrack.audioUrl) return;
-  isPlaying = false;
-  updatePlayPauseButtonUI();
-  refreshPlayIcons();
-  showToast('ไม่พบไฟล์เสียง: ' + currentTrack.audioUrl);
-});
 
 function updateMediaSession() {
   document.title = currentTrack ? `${currentTrack.title} · Ena.` : DEFAULT_TITLE;
@@ -2254,18 +2494,23 @@ window.addEventListener('DOMContentLoaded', () => {
     document.body.classList.add('light-theme');
   }
   updateSettingsThemeLabel();
+  updateFocusAutoHideUI();
+  updateCrossfadeUI();
   const volSlider = document.getElementById('volume-slider');
   if (volSlider) volSlider.value = Math.round(currentVolume * 100);
   updateVolumeUI(Math.round(currentVolume * 100));
   updateAmbientMixerUI();
   initDraggableAndResizablePlayer();
   initDraggableSettingsModal();
+  initFocusAutoHideListeners();
   initRandomSelections();
   renderFeaturedTracks();
   renderLibraryTracks();
   initAmbientParticles();
   injectAndSyncVisualizer();
-  ['play', 'pause', 'ended', 'emptied'].forEach(ev => realAudioPlayer.addEventListener(ev, injectAndSyncVisualizer));
+  [deckA, deckB].forEach(deck => {
+    ['play', 'pause', 'ended', 'emptied'].forEach(ev => deck.addEventListener(ev, injectAndSyncVisualizer));
+  });
   initMediaSession();
   updateQueueButtons();
   restoreResumeState();
