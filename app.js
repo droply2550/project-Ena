@@ -856,7 +856,7 @@ function updatePlayerUI() {
   }
 }
 
-// ==================== THEME & SETTINGS POPOVER ====================
+// ==================== THEME & DRAGGABLE SETTINGS MODAL ====================
 function toggleTheme() {
   const isLight = document.body.classList.toggle('light-theme');
   localStorage.setItem('ena_theme', isLight ? 'light' : 'dark');
@@ -865,10 +865,28 @@ function toggleTheme() {
 
 function toggleSettingsMenu(e) {
   if (e) e.stopPropagation();
-  const menu = document.getElementById('settings-dropdown');
-  if (!menu) return;
-  menu.classList.toggle('hidden');
-  updateSettingsThemeLabel();
+  const modal = document.getElementById('settings-dropdown');
+  const backdrop = document.getElementById('settings-modal-backdrop');
+  if (!modal) return;
+
+  const isOpening = modal.classList.contains('hidden');
+  if (isOpening) {
+    modal.style.left = '50%';
+    modal.style.top = '50%';
+    modal.style.transform = 'translate(-50%, -50%)';
+    modal.classList.remove('hidden');
+    if (backdrop) backdrop.classList.remove('hidden');
+    updateSettingsThemeLabel();
+  } else {
+    closeSettingsModal();
+  }
+}
+
+function closeSettingsModal() {
+  const modal = document.getElementById('settings-dropdown');
+  const backdrop = document.getElementById('settings-modal-backdrop');
+  if (modal) modal.classList.add('hidden');
+  if (backdrop) backdrop.classList.add('hidden');
 }
 
 function updateSettingsThemeLabel() {
@@ -878,13 +896,70 @@ function updateSettingsThemeLabel() {
   label.textContent = isLight ? 'โหมดกลางวัน (Morning)' : 'โหมดกลางคืน (Midnight)';
 }
 
-document.addEventListener('click', (e) => {
-  const menu = document.getElementById('settings-dropdown');
-  const btn = document.getElementById('btn-settings-toggle');
-  if (menu && !menu.classList.contains('hidden')) {
-    if (!menu.contains(e.target) && (!btn || !btn.contains(e.target))) {
-      menu.classList.add('hidden');
+function initDraggableSettingsModal() {
+  const modal = document.getElementById('settings-dropdown');
+  const dragBar = document.getElementById('settings-drag-bar');
+  if (!modal || !dragBar) return;
+
+  let isDragging = false;
+  let startX = 0;
+  let startY = 0;
+  let initialLeft = 0;
+  let initialTop = 0;
+
+  function onDragStart(e) {
+    if (e.target.closest('button')) return;
+
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+    const rect = modal.getBoundingClientRect();
+    modal.style.left = `${rect.left}px`;
+    modal.style.top = `${rect.top}px`;
+    modal.style.transform = 'none';
+
+    isDragging = true;
+    startX = clientX;
+    startY = clientY;
+    initialLeft = rect.left;
+    initialTop = rect.top;
+    modal.style.borderColor = 'var(--accent)';
+  }
+
+  function onDragMove(e) {
+    if (!isDragging) return;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+    const dx = clientX - startX;
+    const dy = clientY - startY;
+    const rect = modal.getBoundingClientRect();
+
+    const maxLeft = window.innerWidth - rect.width - 8;
+    const maxTop = window.innerHeight - rect.height - 8;
+
+    modal.style.left = `${Math.max(8, Math.min(initialLeft + dx, maxLeft))}px`;
+    modal.style.top = `${Math.max(8, Math.min(initialTop + dy, maxTop))}px`;
+  }
+
+  function onDragEnd() {
+    if (isDragging) {
+      isDragging = false;
+      modal.style.borderColor = '';
     }
+  }
+
+  dragBar.addEventListener('mousedown', onDragStart);
+  dragBar.addEventListener('touchstart', onDragStart, { passive: true });
+  window.addEventListener('mousemove', onDragMove);
+  window.addEventListener('touchmove', onDragMove, { passive: true });
+  window.addEventListener('mouseup', onDragEnd);
+  window.addEventListener('touchend', onDragEnd);
+}
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeSettingsModal();
   }
 });
 
@@ -1151,6 +1226,7 @@ window.addEventListener('DOMContentLoaded', () => {
   updateSettingsThemeLabel();
   updateVolumeUI(30);
   initDraggableAndResizablePlayer();
+  initDraggableSettingsModal();
   initRandomSelections();
   renderFeaturedTracks();
   renderLibraryTracks();
