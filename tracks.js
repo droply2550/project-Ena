@@ -1223,7 +1223,105 @@ Sono sen ga sa kasanaru chizu kimi o terasu tame ni saku hana sa
 
 สรุปความหมายเพลง
 เพลงนี้พูดถึงการมีชีวิตอยู่ท่ามกลางความเจ็บปวด โดยไม่ได้พยายามบอกว่าทุกอย่างจะดีขึ้นในทันที แต่ค่อย ๆ ชวนให้เรายอมรับตัวเองและคนอื่นในฐานะมนุษย์คนหนึ่ง`
-  },
+ ,syncedLyrics: [
+  { time: 28.8, text: `(หัวใจที่แตกสลายไม่อาจกลั่นกรองสิ่งใดได้อีก น้ำตาจึงค่อย ๆ เหือดแห้งไปอย่างเงียบงัน)
+Kudaketa kokoro ga roka dekinakute namida wa sotto karete yuku
+砕けた心が濾過できなくて 涙はそっと枯れてゆく` },
+  { time: 39.2, text: `(แม้แต่หยดเดียวก็ไม่อาจไหลรินออกมาได้แล้ว ตลกดีใช่ไหมล่ะ ฉันพูดพลางหัวเราะ)
+Mō hitotsubu mo nagarenakute okashii yo ne tte waratteru
+もう一粒も 流れなくて 可笑しいよねって 笑ってる` },
+  { time: 50.6, text: `(ชีวิตอันโหดร้าย หนามแหลมในเขาวงกตที่ขวางกั้นเส้นทางของเธอ)
+Kokuretsu na jinsei anata o saegiru meiro no kyokusen
+酷烈な人生 あなたを遮る迷路の荊棘` },
+  { time: 56.6, text: `(ความมืดมิดแห่งโลกอันแปดเปื้อนขวางกั้นอยู่ตรงหน้า เธอคือคนที่ทุกข์ตรมยิ่งกว่าใคร)
+Jokusei no yami tachihadakaru kimi wa dare yori mo ureu hito
+濁世の闇 立ちはだかる 君は誰よりも憂う人` },
+  { time: 62.4, text: `(เพราะอย่างนั้น ตอนนี้พวกเราจึงกำลังจะจมดิ่งลงไปจนแทบเอาชีวิตไม่รอดแล้วใช่ไหม)
+Dakara ima bokura wa oborekaketeru sunzen darō
+だから今 僕らは溺れかけてる寸前だろう` },
+  { time: 67.6, text: `(ฉันได้รับการช่วยชีวิตด้วยลมหายใจที่ถูกต้อง แต่ตอนนี้ก็แค่มีชีวิตอยู่เพื่อรอวันหนึ่งที่จะต้องตาย)
+Tadashii kokyū ni sukuwareta ima wa itsuka shinu tame ni ikiteru dake da
+正しい呼吸に救われた 今はいつか死ぬために生きてるだけだ` },
+  { time: 85.1, text: `(เมื่อได้รู้เหตุผลที่ฉันเกลียดสายฝน ก็ทำให้หวนนึกถึงบางสิ่งจากส่วนลึกของหัวใจ)
+Ame ga kirai na wake o shiru to fukai tokoro de omoidasu koto
+雨が嫌いなわけを知ると 深いところで思い出すこと` },
+  { time: 95.8, text: `(ใช่แล้ว หากเป็นฟองสบู่เม็ดใหญ่ ก็คงล่องลอยนุ่มนวล และค่อย ๆ โปรยปรายลงมา)
+Sō ōtsubu no shabon dama nara kitto fuwafuwa de shitōto
+そう 大粒のシャボン玉なら きっとふわふわでしとしと` },
+  { time: 107, text: `(ฉันก้มมองสีของพื้นดินขณะเดิน เลือกเดินไปตามที่ที่ไม่มีแอ่งน้ำ)
+Jimen no iro o mite aruku mizutamari no nai basho eranderu
+地面の色を見て歩く 水溜りのない場所 選んでる` },
+  { time: 112.4, text: `(ที่แท้ก็เพื่อหลีกเลี่ยงเส้นทางอันเลวร้ายสินะ เราก็คงต้องปกป้องตัวเองเอาไว้เหมือนกัน)
+Sate wa fuguu na michi o soreru tame jikobōei datte suru n deshō
+さては 不遇な道を逸れるため 自己防衛だってするんでしょう` },
+  { time: 118.4, text: `(ตอนนี้ฉันคือมนุษย์คนหนึ่ง วันนี้ พรุ่งนี้ และวันถัดจากนั้นก็เช่นกัน)
+Boku wa ima ningen desu kyō mo ashita mo sono tsugi no hi mo
+僕は今 人間です 今日も明日も その次の日も` },
+  { time: 122.3, text: `(เพียงยอมรับตัวเองได้แค่นั้นก็เพียงพอแล้ว ทุกคนต่างหายใจด้วยลมหายใจที่แตกต่างกัน)
+Mitomeru no wa sono kurai de ii minna betsubetsu no iki o tabeteru
+認めるのは そのくらいでいい みんな別々の息を食べてる` },
+  { time: 129.6, text: `(ใช่แล้ว ตอนนี้เธอก็เป็นมนุษย์คนหนึ่งเช่นกัน เพียงแค่เธอเกลียดรูปลักษณ์ของตัวเองเท่านั้น)
+Sō kimi mo ima ningen desu sono sugata ga kirai na dake de
+そう 君も今 人間です その姿が嫌いなだけで` },
+  { time: 135.4, text: `(ฉันเกลียดเธอไม่ลงหรอก เพราะเธอเป็นคนอ่อนโยน เป็นคนที่คอยอธิษฐานเผื่อทุกคน)
+Nikumenai yo yasashii kara kimi wa dare no tame ni mo negau hito
+憎めないよ 優しいから 君は誰の為にも願う人` },
+  { time: 141.2, text: `(ลาลาลาลาลาลา...)
+La la la la la la...
+(ララララララ...)` },
+  { time: 152.9, text: `(เพื่อให้ดอกไม้เพียงหนึ่งกลีบร่วงโรยลง น้ำ ดิน แสงสว่าง รวมถึงเมล็ดพันธุ์ของมัน)
+Hitohira no hana ga chiru tame ni mizu mo tsuchi mo hikari mo sono tane mo
+ひとひらの花が散るために 水も土も光も その種も` },
+  { time: 158.3, text: `(ทุกสิ่งที่อยู่ตรงหน้าฉัน ทั้งความหมายของมัน อดีต และอนาคต)
+Boku no me no mae ni aru mono ga sono imi mo kako mo mirai mo
+僕の目の前にあるものが その意味も過去も未来も` },
+  { time: 163.8, text: `(หากขาดสิ่งใดสิ่งหนึ่งไป ก็ไม่มีทางถือกำเนิดขึ้นมาได้เลย ไม่ว่าจะเป็นฉัน เธอ หรือคนคนนั้น)
+Hitotsu to kaketeru to umarenai ze boku mo kimi mo ano hito mo
+ひとつと欠けると生まれないぜ 僕も君も あの人も` },
+  { time: 169.6, text: `(ทั้งที่ปากพูดว่าไม่มีอะไรเลย แต่กลับโยนสัมภาระจากอดีตให้เธอเป็นคนแบกรับ)
+Nan demo nai to iinagara kako no nimotsu o kimi ni seowaseru
+なんでもないと言いながら 過去の荷物を君に背負わせる` },
+  { time: 175.4, text: `(โชคชะตาขวางทางเอาไว้ ความเข้าใจผิด... ก็เป็นผลจากการกระทำของตัวเองทั้งนั้น)
+Unmei ga tōsenbō suru kanchigai jisekujitoku da yo
+運命が通せんぼする 勘違い 自業自得だよ` },
+  { time: 185.8, text: `(แต่สถานการณ์มันไม่สู้ดีเลยนี่นา อยากหนีใช่ไหม อยากมีชีวิตอยู่ต่อใช่ไหม)
+Demo jōkyō ga yokunai kara ne nigetai yo ne ikitai yo ne
+でも状況が良くないからね 逃げたいよね 生きたいよね` },
+  { time: 199.2, text: `(หากมีช่วงเวลาที่ฉันจะยอมทิ้งร่างกายนี้ลงไป)
+Kono karada o nagedasu sono shunkan ga aru to sureba
+この身体を投げ出す その瞬間があるとすれば` },
+  { time: 205.8, text: `(ก็จงผ่าความมืดมิดของโลกใบนี้ออก แล้วลองค้นหาความหมายของการที่เราได้เกิดมาที่นี่กันเถอะ)
+Kono yo no yami kirisaite sa koko ni umareta imi o sagasō ka
+この世の闇 切り裂いてさ ここに生まれた意味を探そうか` },
+  { time: 211.8, text: `(จุดเริ่มต้นของจุดจบ เมื่อมันเริ่มต้นขึ้น ชีวิตนี้ก็จะกลายเป็นชีวิตสุดท้าย)
+Owari no hajimari hajimareba saigo no jinsei dakara
+終わりの始まり 始まれば最後の人生だから` },
+  { time: 217, text: `(หลังการเดินทางอันยาวนานแสนไกล คงมีช่วงเวลาที่เรียกว่า “ตอนนี้” อยู่เพียงหนึ่งเดียว)
+Tohō mo nai tabi no sue ni ima shika nai toki ga aru no darō
+途方もない 旅の末に 今しかない「時」があるのだろう` },
+  { time: 223.4, text: `(ถึงอย่างนั้น ก็ยังรู้สึกอึดอัดเหมือนหายใจไม่ออกอยู่ดี)
+Sore demo nandaka ikigurushii na
+それでもなんだか息苦しいな` },
+  { time: 227.9, text: `(“การมีชีวิตอยู่ก็เพื่อรอวันหนึ่งที่จะต้องตาย”)
+(Itsuka shinu tame ni ikiteru nante)
+(いつか死ぬために生きてるなんて)` },
+  { time: 239.5, text: `(ถ้าอย่างนั้นล่ะก็ ถ้าเป็นเช่นนั้น...)
+Sore nara sa sore naraba
+それならさ それならば` },
+  { time: 244.9, text: `(มาทำให้ระฆังแห่งหัวใจที่ไม่มีวันแตกสลาย ไม่มีวันพังทลาย ไม่มีวันแหลกสลาย ดังก้องขึ้นกันเถอะ)
+Mō kowarenai kowarenai kowarenai kokoro no kane o narasō
+もう壊れない 壊れない 壊れない心の 鐘を鳴らそう` },
+  { time: 250.9, text: `(แม้ท้องฟ้าจะมืดครึ้ม ไม่ว่าที่ไหนก็เปรอะเปื้อนไปด้วยโคลน)
+Donten darō doromamire sa doko mo kakomokamo
+曇天だろう 泥まみれさ どこもかしこも` },
+  { time: 256.2, text: `(ตอนนี้ มาขีดเส้นลงบนเขาวงกตที่ขวางกั้นเส้นทางแห่งอนาคตของโลกใบนี้กันเถอะ)
+Ima kono yo no yukue o saegiru meiro ni sen o hikō ze
+今 この世の行方を 遮る迷路に 線を引こうぜ` },
+  { time: 262.4, text: `(เพราะเส้นเหล่านั้นจะกลายเป็นแผนที่ที่ซ้อนทับกัน เป็นดอกไม้ที่ผลิบานขึ้นเพื่อส่องแสงให้เธอ)
+Sono sen ga sa kasanaru chizu kimi o terasu tame ni saku hana sa
+その線がさ 重なる地図 君を照らすために咲く花さ` }
+],
+},
   {
     id: 5,
     number: "05 / 06",
@@ -1434,7 +1532,147 @@ Kamisama ni negau no wa tada hitotsu dake
 สรุปความหมายเพลง
 「生きるよすが」 หมายถึง สิ่งยึดเหนี่ยวที่ทำให้เรายังมีเหตุผลที่จะมีชีวิตอยู่
 เพลงนี้เล่าถึงคนคนหนึ่งที่รู้สึกว่าหัวใจของตัวเองว่างเปล่าราวกับเครื่องจักร พยายามใช้บทเพลงและถ้อยคำเพื่อช่วยเหลือผู้อื่น แต่กลับตั้งคำถามว่าคำพูดของตัวเองมีคุณค่าจริงหรือไม่ เพราะแม้แต่ตัวเขาเองก็ยังไม่สามารถเติมเต็มช่องว่างภายในได้`
-  },
+  ,syncedLyrics: [
+  { time: 0.6, text: `(จงเบ่งบานและเติมเต็มท้องฟ้าสีน้ำเงินเข้มแห่งราตรี ให้เป็นสิ่งยึดเหนี่ยวในการมีชีวิตอยู่)
+Yoru no ai ni saite michite ike ikiru yosuga
+夜の藍に咲いて満ちていけ 生きるよすが` },
+  { time: 4.6, text: `(บาดแผล คำโกหก และความเจ็บปวด จงกลายเป็นบทกวี)
+Kizu mo uso mo itami mo uta ni nare
+傷も嘘も痛みも詩になれ` },
+  { time: 8, text: `(ความฝันและความรักที่ฉันเขียนลงไป จะช่วยใครไว้ได้บ้างไหม)
+Yume o ai o kaite nani o sukuemasu ka
+夢を 愛を書いて何を救えますか` },
+  { time: 12, text: `(จงกลายเป็นแสงสว่างที่ย้อมแต่งท้องฟ้าอันหม่นเศร้า)
+Ureu sora o someru hikari ni nare
+憂う空を染める光になれ` },
+  { time: 35.9, text: `(รูปแบบของความสุขที่พบเห็นได้ทั่วไปบนโลกใบนี้)
+Kono yo ni arifureta koufuku no katachi
+この世にありふれた幸福の形` },
+  { time: 39.6, text: `(กลับไม่อาจเติมเต็มช่องว่างที่เว้าแหว่งอยู่ภายในได้)
+Sore ja aita ana wa umerarenai
+それじゃ空いた穴は埋められない` },
+  { time: 43.1, text: `(ฉันนี่มันคนโกหก ทั้งที่พูดว่าตัวเองยังมีชีวิตอยู่)
+Usotsuki nan da boku wa ikite iru da toka
+嘘つきなんだ僕は 生きているだとか` },
+  { time: 47.3, text: `(ทั้งที่หัวใจดวงนี้เป็นเพียงเครื่องจักรเท่านั้น)
+Kono kikai mitai na kokoro de sa
+この機械みたいな心でさ` },
+  { time: 50.4, text: `(ทำไม่ได้ ไม่เข้าใจ ไม่มีวันเปลี่ยนแปลง)
+Dekinai wakaranai kawaranai
+出来ない 解らない 変わらない` },
+  { time: 53.7, text: `(ถ้อยคำเหล่านั้นกลายเป็นเพียงท่วงทำนองแห่งเสียงอันไร้ค่า)
+Kotobatachi wa mukachi na neiro to kasu
+言葉達は無価値な音色と化す` },
+  { time: 57.4, text: `(ไม่อาจเติมเต็ม ไม่อาจทำให้เป็นจริง)
+Mitasarenai kanawanai
+満たされない 叶わない` },
+  { time: 59.9, text: `(บทเพลงเช่นนี้...)
+Konna uta ja
+こんな歌じゃ` },
+  { time: 61.5, text: `(อา... ไม่อาจส่องแสงไปถึงหัวใจของใครได้เลย)
+Aa dare no kokoro mo terasenai
+ああ だれの心も照らせない` },
+  { time: 64.9, text: `(จงฉีกกระชากและกวาดล้างความเศร้าแห่งราตรีไปเสีย ให้เป็นสิ่งยึดเหนี่ยวในการมีชีวิตอยู่)
+Yoru no ai o saite naide ike ikiru yosuga
+夜の哀を裂いて薙いでいけ 生きるよすが` },
+  { time: 69, text: `(ทั้งความผิดพลาด คำตอบ วันนี้ และอนาคต จงกลายเป็นบทกวี)
+Machigai mo kotae mo kyou mo mirai mo uta ni nare
+間違いも答えも今日も未来も詩になれ` },
+  { time: 72.7, text: `(เสียงที่ฉันขับขานออกมานี้ ตอนนี้เธอได้ยินมันหรือเปล่า)
+Kanadeta kono koe ga ima kikoemasu ka
+奏でたこの声が いま聴こえますか` },
+  { time: 76.7, text: `(เสียงกรีดร้องอันแสนโง่เขลาของคนโง่อย่างฉัน)
+Orokana boku no bakageta sakebi o
+愚かな僕の馬鹿げた叫びを` },
+  { time: 80.8, text: `(ได้โปรด ได้โปรดเถอะ สำหรับชีวิตที่เป็นเพียงชีวิตเช่นนี้)
+Douka douka konna inochi ni
+どうか どうか こんな命に` },
+  { time: 82.9, text: `(ช่วยมอบเหตุผลที่จะมีชีวิตอยู่ต่อไปในวันพรุ่งนี้ให้ฉันที)
+Ashita o ikiru riyuu o kure yo
+明日を生きる理由をくれよ` },
+  { time: 88.7, text: `(ได้โปรด ได้โปรด ช่วยค้นหาฉันให้พบที)
+Douka douka boku o mitsukete
+どうか どうか 僕を見つけて` },
+  { time: 92.1, text: `(ดวงจันทร์ยามเที่ยงวันที่มีอยู่จริงอย่างแน่นอนดวงนั้น)
+Tashika ni aru mahiru no tsuki o
+慥かに在る真昼の月を` },
+  { time: 109.6, text: `(ลำคอที่กลืนถ้อยคำเหล่านั้นลงไปกลับรู้สึกปวดแปลบ)
+Kotoba o nomikonda nodo ga uzuita
+言葉を飲み込んだ喉が疼いた` },
+  { time: 115.9, text: `(สิ่งนี้ที่ติดค้างอยู่ในอก คืออะไรกันแน่)
+Mune ni tsukaeru kore wa nani ka
+胸に痞える これは何か` },
+  { time: 119.3, text: `(ฉันเงยหน้ามองความมืดมิดที่กลืนกินหัวใจ)
+Kokoro o nomikonda yami o aoida
+心を呑み込んだ闇を仰いだ` },
+  { time: 123.7, text: `(แล้วเอื้อมมือออกไปหาแสงสีชาดที่สาดส่องเข้ามา)
+Sashita akane ni te o nobasu
+差した茜に 手を伸ばす` },
+  { time: 125.6, text: `(ไม่ใช่ทุกสิ่งหรอกนะที่จะได้รับผลตอบแทนกลับคืนมา)
+Subete ga sorya mukuwareru mono ja nai
+全てがそりゃ報われるものじゃない` },
+  { time: 130.9, text: `(ทั้งเวลาและเงินทองอาจกลายเป็นสิ่งสูญเปล่าก็ได้)
+Jikan mo kane mo muda ni naru kamo na
+時間も金も無駄になるかもな` },
+  { time: 134.9, text: `(สักวันหนึ่ง ทุกสิ่งก็จะเลือนหายไปในอดีต)
+Itsuka wa kako ni kiete iku
+いつかは過去に消えていく` },
+  { time: 137.8, text: `(ถึงอย่างนั้น เหตุผลที่ฉันยังขับขานบทเพลง ก็เพราะฉันได้ถือกำเนิดขึ้นมาบนโลกใบนี้)
+Soredemo boku ga utau no wa koko ni umareta kara
+それでも僕が歌うのはここに生まれたから` },
+  { time: 157.2, text: `(ยังมีบางสิ่งที่ไม่อาจช่วยไว้ได้ด้วยความถูกต้องเพียงอย่างเดียว)
+Tadashii dake ja sukuenai mono mo aru
+正しいだけじゃ救えないものもある` },
+  { time: 163.2, text: `(หากการไม่ร้องไห้คือความเข้มแข็งแล้วล่ะก็)
+Nakanai koto ga tsuyosa datte n nara
+泣かないことが強さだってんなら` },
+  { time: 168.4, text: `(ฉันจะเป็นคนอ่อนแอแบบนี้ต่อไปก็ได้)
+Boku wa yowai mama de ii
+僕は弱いままでいい` },
+  { time: 171.8, text: `(จงฉีกกระชากและกวาดล้างความเศร้าแห่งราตรีไปเสีย ให้เป็นสิ่งยึดเหนี่ยวในการมีชีวิตอยู่)
+Yoru no ai o saite naide ike ikiru yosuga
+夜の哀を裂いて薙いでいけ 生きるよすが` },
+  { time: 171.8, text: `(ทั้งความผิดพลาด คำตอบ วันนี้ และอนาคต จงกลายเป็นบทกวี)
+Machigai mo kotae mo kyou mo mirai mo uta ni nare
+間違いも答えも今日も未来も詩になれ` },
+  { time: 175.9, text: `(ฉันไม่เข้าใจเลย)
+Wakaranai
+わからない` },
+  { time: 182.8, text: `(ไม่ว่าจะพรสวรรค์หรือชีวิต ก็ใช่ว่าจะเข้าใจมันได้ง่าย ๆ)
+Sai mo jinsei mo wakaru mono ka
+才も人生もわかるものか` },
+  { time: 184.1, text: `(แม้จะเต็มไปด้วยคำโกหกก็ตาม ถึงอย่างนั้น...)
+Uso darake demo soredemo
+嘘だらけでも それでも` },
+  { time: 187.2, text: `(จงมีชีวิตต่อไป แม้จะไม่มีทั้งความรักหรือสิ่งใดเลยก็ตาม คืนวันก็ยังคงสว่างขึ้น)
+Ikiro ai mo nani mo nakutatte akeru yoru da
+生きろ 愛も何も無くたって明ける夜だ` },
+  { time: 190.2, text: `(เหตุผลที่เราเกิดมา จะเป็นสิ่งที่สร้างขึ้นภายหลังก็ไม่เป็นไร)
+Umareta riyuu nante atozuke datte ii
+生まれた理由なんて後付けだっていい` },
+  { time: 195, text: `(อย่าเรียกภาพของการค่อย ๆ ดับสูญว่าเป็นความงดงามเลย)
+Shiniyuku sama o sore o bi to yobu na
+死にゆく様を それを美と呼ぶな` },
+  { time: 199, text: `(ไม่มีดอกไม้ดอกไหนที่เบ่งบานขึ้นมาเพียงเพื่อร่วงโรยหรอก จริงไหม)
+Chiru tame ni saku hana nante nai daro
+散る為に咲く花なんて無いだろ` },
+  { time: 202.5, text: `(สิ่งที่งดงาม แม้จะดูน่าเกลียดเพียงใดก็ตาม)
+Minikui hodo ni utsukushii mono o
+醜い程に美しいものを` },
+  { time: 204.7, text: `(ช่วยเติมเต็มหัวใจที่แหว่งเว้าของฉันทีเถอะ)
+Kaketa kokoro o umete kure yo
+欠けた心を埋めてくれよ` },
+  { time: 204.7, text: `(ด้วยบทเพลงแบบไหน ด้วยถ้อยคำแบบใด...)
+Donna uta de donna kotoba de
+どんな歌で どんな言葉で` },
+  { time: 210.6, text: `(ฉันจะกลายเป็นสิ่งยึดเหนี่ยวในค่ำคืนอันมืดมิดได้อย่างไรกันนะ?)
+Kurai yoru no yosuga ni nareru? Ah
+昏い夜のよすがになれる? Ah` },
+  { time: 221.7, text: `(สิ่งที่ฉันวิงวอนต่อพระเจ้า มีเพียงสิ่งเดียวเท่านั้น)
+Kamisama ni negau no wa tada hitotsu dake
+神様に願うのは ただ一つだけ` }
+],
+},
   {
     id: 6,
     number: "06 / 06",

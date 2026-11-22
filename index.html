@@ -17,10 +17,9 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="antialiased selection:bg-[#6FA8E8]/30 selection:text-[#F4F7FC]">
-    <!-- Ambient Stardust & Fireflies Background -->
+  <!-- Ambient Stardust & Fireflies Background -->
   <canvas id="ambient-particles" class="fixed inset-0 z-0 pointer-events-none"></canvas>
 
-  <!-- ==================== STICKY TOP NAVBAR ==================== -->
   <!-- ==================== TOP NAVIGATION BAR ==================== -->
   <header class="fixed top-0 left-0 right-0 z-50 h-20 glass-nav border-b border-[var(--border-subtle)]">
     <div class="w-full h-full px-6 sm:px-10 lg:px-14 grid grid-cols-3 items-center">
@@ -45,28 +44,77 @@
         </button>
       </nav>
 
-      <!-- 3. ขวาสุด: A QUIET PLACE FOR MUSIC + ปุ่มสลับธีม -->
-      <div class="flex items-center justify-end gap-4 sm:gap-5">
+      <!-- 3. ขวาสุด: A QUIET PLACE FOR MUSIC + ปุ่ม Settings -->
+      <div class="flex items-center justify-end gap-4 sm:gap-5 relative">
         <div class="hidden md:flex items-center gap-2 text-[11px] font-en tracking-[0.2em] uppercase text-[var(--text-secondary)]">
           <span class="w-1.5 h-1.5 rounded-full bg-[var(--accent)]"></span>
           <span>A QUIET PLACE FOR MUSIC</span>
         </div>
 
-        <button 
-          onclick="toggleTheme()" 
-          title="สลับโหมดสีหน้าจอ"
-          aria-label="Toggle Theme"
-          class="w-9 h-9 rounded-full border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors cursor-pointer">
-          <!-- Icon Moon (Dark Mode) -->
-          <svg id="icon-moon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-          </svg>
-          <!-- Icon Sun (Light Mode) -->
-          <svg id="icon-sun" class="w-4 h-4 hidden" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="5"/>
-            <path stroke-linecap="round" d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-          </svg>
-        </button>
+        <!-- ปุ่มเปิดเมนูตั้งค่า (Settings) -->
+        <div class="relative">
+          <button 
+            id="btn-settings-toggle"
+            onclick="toggleSettingsMenu(event)" 
+            title="ตั้งค่าห้องฟังเพลง"
+            aria-label="Room Settings"
+            class="relative w-9 h-9 rounded-full border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors cursor-pointer">
+            <!-- จุดไฟแจ้งเตือนเมื่อเปิด Sleep Timer ค้างไว้ -->
+            <span id="sleep-timer-dot" class="hidden absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[var(--accent)] ring-2 ring-[var(--bg)] animate-pulse"></span>
+            <!-- Icon Gear -->
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+
+          <!-- กล่องเมนูตั้งค่า (Settings Popover) -->
+          <div 
+            id="settings-dropdown" 
+            class="hidden absolute right-0 mt-3 w-72 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg)]/95 backdrop-blur-xl shadow-2xl p-4 space-y-4 z-50">
+            
+            <!-- ส่วนที่ 1: โหมดหน้าจอ (Dark / Light) -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-en tracking-[0.18em] uppercase text-[var(--text-secondary)]">Atmosphere Theme</span>
+              </div>
+              <button 
+                onclick="toggleTheme(); updateSettingsThemeLabel();" 
+                class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-[var(--border-subtle)] hover:border-[var(--accent)] bg-[var(--surface-elevated)]/40 text-xs text-[var(--text-primary)] transition-colors cursor-pointer">
+                <span id="settings-theme-text">โหมดกลางคืน (Midnight)</span>
+                <span class="text-[10px] font-en tracking-wider px-2 py-0.5 rounded-full bg-[var(--accent)]/15 text-[var(--accent)]">สลับธีม</span>
+              </button>
+            </div>
+
+            <div class="border-t border-[var(--border-subtle)]"></div>
+
+            <!-- ส่วนที่ 2: ตั้งเวลาปิดเพลงอัตโนมัติ (Sleep Timer) -->
+            <div class="space-y-2.5">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-en tracking-[0.18em] uppercase text-[var(--text-secondary)]">Sleep Timer</span>
+                <span id="sleep-timer-countdown" class="text-[11px] font-en text-[var(--accent)] font-medium">ปิดอยู่</span>
+              </div>
+              <p class="text-[11px] text-[var(--text-secondary)]/80 font-light">
+                ค่อย ๆ หรี่เสียงเพลงจนเงียบสนิทเมื่อครบเวลา
+              </p>
+              <div class="grid grid-cols-4 gap-1.5 pt-1">
+                <button onclick="setSleepTimer(0)" data-sleep="0" class="sleep-opt-btn active py-1.5 rounded-lg border border-[var(--border-subtle)] text-[11px] font-en transition-colors cursor-pointer">
+                  ปิด
+                </button>
+                <button onclick="setSleepTimer(15)" data-sleep="15" class="sleep-opt-btn py-1.5 rounded-lg border border-[var(--border-subtle)] text-[11px] font-en transition-colors cursor-pointer">
+                  15m
+                </button>
+                <button onclick="setSleepTimer(30)" data-sleep="30" class="sleep-opt-btn py-1.5 rounded-lg border border-[var(--border-subtle)] text-[11px] font-en transition-colors cursor-pointer">
+                  30m
+                </button>
+                <button onclick="setSleepTimer(60)" data-sleep="60" class="sleep-opt-btn py-1.5 rounded-lg border border-[var(--border-subtle)] text-[11px] font-en transition-colors cursor-pointer">
+                  60m
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
       </div>
 
     </div>
@@ -284,9 +332,13 @@
     <!-- ============================================================ -->
     <!-- PAGE 3: เกี่ยวกับ (ABOUT ENA)                                 -->
     <!-- ============================================================ -->
-    <section id="page-about" class="page-view max-w-3xl mx-auto space-y-16 pt-4">
+    <!-- ============================================================ -->
+    <!-- PAGE 3: เกี่ยวกับ (ABOUT ENA)                                 -->
+    <!-- ============================================================ -->
+    <section id="page-about" class="page-view max-w-4xl mx-auto space-y-16 pt-4">
       
-      <div class="space-y-5">
+      <!-- 00 / INTRO HEADER -->
+      <div class="space-y-5 max-w-3xl">
         <p class="text-[11px] font-en tracking-[0.2em] uppercase text-[var(--accent)]">
           ABOUT THE ROOM / 03
         </p>
@@ -299,35 +351,236 @@
         </p>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div class="editorial-card rounded-2xl p-7 space-y-3">
-          <span class="text-[11px] font-en tracking-[0.18em] uppercase text-[var(--accent)]">01 / PHILOSOPHY</span>
-          <h3 class="text-lg font-semibold">คัดสรรด้วยความรู้สึก</h3>
-          <p class="text-sm text-[var(--text-secondary)] leading-relaxed font-light">
-            ไม่มีอัลกอริทึมที่เร่งเร้า มีเพียงบันทึกสั้น ๆ และเพลงแนว Japanese Indie, Ambient, Dream Pop และ Acoustic ที่เราหยิบมาวางไว้บนโต๊ะไม้ทีละแผ่น
+      <!-- 01 / THE ORIGIN OF ENA & BLUE HOUR CONCEPT -->
+      <div class="editorial-card rounded-2xl p-8 sm:p-10 grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+        <div class="md:col-span-4 flex flex-col justify-between h-full border-b md:border-b-0 md:border-r border-[var(--border-subtle)] pb-6 md:pb-0 md:pr-8 space-y-4">
+          <span class="text-[11px] font-en tracking-[0.18em] uppercase text-[var(--accent)]">01 / THE ORIGIN</span>
+          <div>
+            <div class="text-4xl font-bold tracking-tight text-[var(--text-primary)] flex items-center gap-1">
+              <span>Ena</span><span class="w-2 h-2 rounded-full bg-[var(--accent)] mt-3"></span>
+            </div>
+            <p class="font-jp text-xs text-[var(--text-secondary)] tracking-widest mt-1">
+              恵那 · エナ · Blue Hour
+            </p>
+          </div>
+          <p class="text-xs text-[var(--text-secondary)]/80 font-light leading-relaxed">
+            พยางค์สั้นที่เรียบง่าย อบอุ่น และเป็นกันเอง เหมือนชื่อเพื่อนคนหนึ่งที่นั่งฟังเพลงอยู่ข้าง ๆ
           </p>
         </div>
 
-        <div class="editorial-card rounded-2xl p-7 space-y-3">
-          <span class="text-[11px] font-en tracking-[0.18em] uppercase text-[var(--accent)]">02 / ATMOSPHERE</span>
-          <h3 class="text-lg font-semibold">สีน้ำเงินของยามค่ำคืน</h3>
-          <p class="text-sm text-[var(--text-secondary)] leading-relaxed font-light">
-            เราเลือกใช้เฉดสี Midnight Blue และ Ocean Blue เพื่อจำลองช่วงเวลา Blue Hour — รอยต่อระหว่างแสงสุดท้ายของวันกับความสงบของท้องฟ้ายามค่ำ
+        <div class="md:col-span-8 space-y-4">
+          <h3 class="text-xl font-semibold text-[var(--text-primary)]">
+            ที่มาของชื่อ “Ena.” และแนวคิด Blue Hour & Midnight
+          </h3>
+          <p class="text-sm text-[var(--text-secondary)] leading-[1.85] font-light">
+            เราเลือกใช้ชื่อ <strong class="text-[var(--text-primary)] font-medium">Ena.</strong> เพื่อแทนพื้นที่ปลอดภัยที่ไม่มีการตัดสิน ไม่มีอัลกอริทึมที่คอยเร่งเร้า มีเพียงเพลงแนว Japanese Indie, J-Rock, Ambient และ Acoustic ที่หยิบมาวางไว้บนโต๊ะไม้ทีละแผ่น
+          </p>
+          <p class="text-sm text-[var(--text-secondary)] leading-[1.85] font-light">
+            และเพราะความรู้สึกของคนเราเปลี่ยนไปตามช่วงเวลา ห้องนี้จึงออกแบบมาให้มี <strong class="text-[var(--text-primary)] font-medium">2 โหมดบรรยากาศ</strong>: โทนสีน้ำเงินเข้ม <span class="text-[var(--accent)] font-en">Midnight</span> สำหรับคนนอนดึกที่อยากปล่อยใจไปกับความเงียบยามค่ำคืน และโทนสว่าง <span class="text-[var(--accent)] font-en">Morning</span> ที่สะอาดตาสำหรับเช้าวันใหม่ที่สดใส
           </p>
         </div>
       </div>
 
-      <div class="editorial-card rounded-2xl p-8 space-y-5">
-        <div class="flex items-center justify-between">
-          <span class="text-[11px] font-en tracking-[0.18em] uppercase text-[var(--accent)]">SOUND EXPERIENCE</span>
-          <span class="text-xs font-jp text-[var(--text-secondary)]">静寂と音</span>
+      <!-- 02 / THE 4 ATMOSPHERES GUIDE -->
+      <div class="space-y-6">
+        <div class="space-y-2">
+          <span class="text-[11px] font-en tracking-[0.18em] uppercase text-[var(--accent)]">02 / ATMOSPHERE GUIDE</span>
+          <h2 class="text-2xl font-bold tracking-tight">แผนผังบรรยากาศในห้อง</h2>
+          <p class="text-sm text-[var(--text-secondary)] font-light">
+            เลือกหมวดหมู่ที่ตรงกับความรู้สึกของคุณในตอนนี้ (คลิกที่การ์ดเพื่อเปิดฟังเพลงในหมวดนั้นได้ทันที)
+          </p>
         </div>
-        <h3 class="text-xl font-semibold">ทดลองฟังเสียงบรรยากาศในห้อง</h3>
-        <p class="text-sm text-[var(--text-secondary)] leading-relaxed font-light">
-          ทุกเพลงใน Ena มาพร้อมเครื่องเล่นเสียงบรรยากาศจำลอง (Ambient Synth & Rain/Waves Generator) ที่สร้างเสียงคอร์ดเปียโนอุ่น ๆ ผสานเสียงธรรมชาติเบา ๆ เพื่อให้คุณเปิดคลอระหว่างอ่านหนังสือหรือพักผ่อนได้จริง
-        </p>
-        <div class="pt-1">
-          <button onclick="playTrackById(2)" class="btn-primary px-5 py-2.5 rounded-full text-xs font-medium inline-flex items-center gap-2 cursor-pointer">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <!-- Mood 1: Late Night -->
+          <div onclick="jumpToMood('Late Night')" class="editorial-card rounded-2xl p-6 space-y-2.5 cursor-pointer group">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-en tracking-[0.15em] uppercase text-[var(--accent)] font-semibold">LATE NIGHT · ดึกสงัด</span>
+              <span class="text-xs text-[var(--text-secondary)] group-hover:translate-x-1 transition-transform">→</span>
+            </div>
+            <p class="text-sm text-[var(--text-secondary)] leading-relaxed font-light">
+              เพลงที่ชวนทบทวนตัวเอง เงียบงัน และลึกซึ้ง เหมาะกับช่วงเวลาหลังเที่ยงคืนที่ความคิดชัดเจนที่สุด
+            </p>
+            <p class="text-[11px] font-en text-[var(--text-secondary)]/75 pt-1">
+              เช่น Engeki, Irony, Reason for existence
+            </p>
+          </div>
+
+          <!-- Mood 2: Warmth -->
+          <div onclick="jumpToMood('Warmth')" class="editorial-card rounded-2xl p-6 space-y-2.5 cursor-pointer group">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-en tracking-[0.15em] uppercase text-[var(--accent)] font-semibold">WARMTH · แสงอุ่น</span>
+              <span class="text-xs text-[var(--text-secondary)] group-hover:translate-x-1 transition-transform">→</span>
+            </div>
+            <p class="text-sm text-[var(--text-secondary)] leading-relaxed font-light">
+              เพลงที่ปลอบประโลมใจ โอบกอดความเปราะบาง และให้กำลังใจให้ก้าวเดินต่อไปในวันที่เหนื่อยล้า
+            </p>
+            <p class="text-[11px] font-en text-[var(--text-secondary)]/75 pt-1">
+              เช่น Itsuka, more than words
+            </p>
+          </div>
+
+          <!-- Mood 3: Rainy Window -->
+          <div onclick="jumpToMood('Rainy Window')" class="editorial-card rounded-2xl p-6 space-y-2.5 cursor-pointer group">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-en tracking-[0.15em] uppercase text-[var(--accent)] font-semibold">RAINY WINDOW · คืนฝนพรำ</span>
+              <span class="text-xs text-[var(--text-secondary)] group-hover:translate-x-1 transition-transform">→</span>
+            </div>
+            <p class="text-sm text-[var(--text-secondary)] leading-relaxed font-light">
+              เพลงที่เข้ากับเสียงสายฝนและหน้าต่างเปียกชื้น เต็มไปด้วยอารมณ์ที่เข้มข้นและการเยียวยา
+            </p>
+            <p class="text-[11px] font-en text-[var(--text-secondary)]/75 pt-1">
+              เช่น Blooming in the Mud
+            </p>
+          </div>
+
+          <!-- Mood 4: Soft Waves -->
+          <div onclick="jumpToMood('Soft Waves')" class="editorial-card rounded-2xl p-6 space-y-2.5 cursor-pointer group">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-en tracking-[0.15em] uppercase text-[var(--accent)] font-semibold">SOFT WAVES · ริมทะเล</span>
+              <span class="text-xs text-[var(--text-secondary)] group-hover:translate-x-1 transition-transform">→</span>
+            </div>
+            <p class="text-sm text-[var(--text-secondary)] leading-relaxed font-light">
+              เพลงโปร่งเบา ล่องลอยเหมือนเกลียวคลื่นและฟองอากาศ ช่วยผ่อนคลายสมองในวันที่วุ่นวาย
+            </p>
+            <p class="text-[11px] font-en text-[var(--text-secondary)]/75 pt-1">
+              เช่น Bubbles
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 03 / ROOM CONTROLS & SHORTCUTS -->
+      <div class="editorial-card rounded-2xl p-8 sm:p-10 space-y-6">
+        <div class="space-y-1.5">
+          <span class="text-[11px] font-en tracking-[0.18em] uppercase text-[var(--accent)]">03 / USER GUIDE</span>
+          <h2 class="text-2xl font-bold tracking-tight">คู่มือการใช้งานห้องฟังเพลง</h2>
+          <p class="text-sm text-[var(--text-secondary)] font-light">
+            ลูกเล่นและคีย์ลัดที่ซ่อนอยู่เพื่อให้การฟังเพลงของคุณลื่นไหลที่สุด
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+          <!-- Shortcut 1: Spacebar -->
+          <div class="flex items-start gap-3.5 p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)]/30">
+            <div class="px-2.5 py-1 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg)] text-[11px] font-en font-semibold text-[var(--accent)] shrink-0">
+              Space
+            </div>
+            <div class="space-y-1">
+              <h4 class="text-sm font-medium text-[var(--text-primary)]">เล่น / หยุดเพลงชั่วคราว</h4>
+              <p class="text-xs text-[var(--text-secondary)] font-light leading-relaxed">
+                กด Spacebar ได้ทันทีจากทุกหน้าของเว็บ (ทำงานอัตโนมัติเมื่อไม่ได้พิมพ์ในช่องค้นหา)
+              </p>
+            </div>
+          </div>
+
+          <!-- Shortcut 2: Arrow Keys -->
+          <div class="flex items-start gap-3.5 p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)]/30">
+            <div class="px-2.5 py-1 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg)] text-[11px] font-en font-semibold text-[var(--accent)] shrink-0">
+              ← / →
+            </div>
+            <div class="space-y-1">
+              <h4 class="text-sm font-medium text-[var(--text-primary)]">กรอเพลงถอยหลัง / เดินหน้า</h4>
+              <p class="text-xs text-[var(--text-secondary)] font-light leading-relaxed">
+                กดปุ่มลูกศรซ้ายหรือขวาบนคีย์บอร์ดเพื่อข้ามช่วงเพลงทีละ 5 วินาที
+              </p>
+            </div>
+          </div>
+
+          <!-- Feature 3: Interactive Synced Lyrics -->
+          <div class="flex items-start gap-3.5 p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)]/30">
+            <div class="w-8 h-8 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg)] flex items-center justify-center text-[var(--accent)] shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h12M4 14h9"></path>
+              </svg>
+            </div>
+            <div class="space-y-1">
+              <h4 class="text-sm font-medium text-[var(--text-primary)]">คลิกเนื้อเพลงเพื่อกระโดดท่อน</h4>
+              <p class="text-xs text-[var(--text-secondary)] font-light leading-relaxed">
+                เปิดแผงเนื้อเพลงด้านขวา แล้วคลิกที่บรรทัดที่ต้องการเพื่อย้อนฟังท่อนนั้นทันที
+              </p>
+            </div>
+          </div>
+
+          <!-- Feature 4: Draggable & Resizable Player -->
+          <div class="flex items-start gap-3.5 p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)]/30">
+            <div class="w-8 h-8 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg)] flex items-center justify-center text-[var(--accent)] shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+              </svg>
+            </div>
+            <div class="space-y-1">
+              <h4 class="text-sm font-medium text-[var(--text-primary)]">ลากย้าย & ปรับขนาด Mini-Player</h4>
+              <p class="text-xs text-[var(--text-secondary)] font-light leading-relaxed">
+                จับแถบด้านบนของตัวเล่นเพื่อย้ายมุมวาง หรือลากมุมขวาล่างเพื่อย่อ-ขยายขนาด
+              </p>
+            </div>
+          </div>
+
+          <!-- Feature 5: Sleep Timer -->
+          <div class="md:col-span-2 flex items-start gap-3.5 p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)]/30">
+            <div class="w-8 h-8 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg)] flex items-center justify-center text-[var(--accent)] shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+              </svg>
+            </div>
+            <div class="space-y-1">
+              <h4 class="text-sm font-medium text-[var(--text-primary)]">Sleep Timer & สลับธีม (ปุ่มฟันเฟืองมุมขวาบน)</h4>
+              <p class="text-xs text-[var(--text-secondary)] font-light leading-relaxed">
+                ตั้งเวลาปิดเพลงอัตโนมัติ 15, 30 หรือ 60 นาที สำหรับเปิดฟังก่อนนอน โดยระบบจะค่อย ๆ เฟดเสียงเพลงเบาลงอย่างนุ่มนวลในช่วง 15 วินาทีสุดท้ายก่อนหยุดเล่น
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+<!-- 04 / COPYRIGHT & CREDITS -->
+      <div class="editorial-card rounded-2xl p-8 sm:p-10 space-y-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div class="space-y-1">
+            <span class="text-[11px] font-en tracking-[0.18em] uppercase text-[var(--accent)]">04 / COPYRIGHT & CREDITS</span>
+            <h2 class="text-xl sm:text-2xl font-bold tracking-tight">ลิขสิทธิ์และเครดิตผลงาน</h2>
+          </div>
+          <span class="text-[11px] font-en tracking-[0.14em] px-3 py-1 rounded-full border border-[var(--border-subtle)] text-[var(--text-secondary)] w-fit">
+            NON-COMMERCIAL ARCHIVE
+          </span>
+        </div>
+
+        <div class="space-y-3 text-sm text-[var(--text-secondary)] leading-[1.85] font-light">
+          <p>
+            เว็บไซต์ <strong class="text-[var(--text-primary)] font-medium">Ena.</strong> จัดทำขึ้นเพื่อเป็นพื้นที่แบ่งปันความรู้สึกผ่านเสียงดนตรี การศึกษาด้านการออกแบบเว็บไซต์ และรวบรวมคำแปลเนื้อเพลงภาษาไทยเท่านั้น <strong class="text-[var(--text-primary)] font-medium">มิได้มีวัตถุประสงค์เพื่อแสวงหาผลกำไรหรือใช้ในเชิงพาณิชย์แต่อย่างใด</strong>
+          </p>
+          <ul class="space-y-2 pt-1 text-xs sm:text-sm">
+            <li class="flex items-start gap-2.5">
+              <span class="text-[var(--accent)] mt-1">•</span>
+              <span><strong class="text-[var(--text-primary)] font-medium">ผลงานเพลงและภาพประกอบ:</strong> ลิขสิทธิ์ทั้งหมดเป็นของศิลปิน ผู้ประพันธ์เพลง และค่ายเพลงต้นสังกัดแต่เพียงผู้เดียว</span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="text-[var(--accent)] mt-1">•</span>
+              <span><strong class="text-[var(--text-primary)] font-medium">คำแปลและเรียบเรียงเนื้อเพลง:</strong> จัดทำขึ้นเพื่อให้ผู้ฟังเข้าถึงความหมายและบรรยากาศของบทเพลงได้ลึกซึ้งยิ่งขึ้น หากพบข้อผิดพลาดประการใด ขออภัยมา ณ ที่นี้</span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="text-[var(--accent)] mt-1">•</span>
+              <span><strong class="text-[var(--text-primary)] font-medium">การสนับสนุนศิลปิน:</strong> หากคุณชื่นชอบบทเพลงใดในห้องนี้ เราขอเชิญชวนให้ร่วมสนับสนุนศิลปินผ่านช่องทางสตรีมมิงและผลงานถูกลิขสิทธิ์ของศิลปินโดยตรง</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 05 / SOUND EXPERIENCE CTA -->
+      <div class="note-banner rounded-2xl p-8 sm:p-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div class="space-y-2 max-w-xl">
+          <div class="flex items-center gap-3">
+            <span class="text-[11px] font-en tracking-[0.18em] uppercase text-[var(--accent)]">START LISTENING</span>
+            <span class="text-xs font-jp text-[var(--text-secondary)]">静寂と音</span>
+          </div>
+          <h3 class="text-xl font-semibold">พร้อมพักผ่อนไปกับเสียงเพลงแล้วหรือยัง?</h3>
+          <p class="text-sm text-[var(--text-secondary)] leading-relaxed font-light">
+            ลองเริ่มต้นค่ำคืนนี้ด้วยเพลง “Itsuka” หรือเข้าไปเลือกบรรยากาศที่ชอบในคลังเพลงทั้งหมด
+          </p>
+        </div>
+        <div class="shrink-0">
+          <button onclick="playTrackById(2)" class="btn-primary px-6 py-3 rounded-full text-xs font-medium inline-flex items-center gap-2 cursor-pointer shadow-sm">
             <span>ลองเปิดเพลง "Itsuka"</span>
             <span>▶</span>
           </button>
@@ -335,12 +588,10 @@
       </div>
 
     </section>
-
   </main>
 
-  <!-- ==================== MINIMALIST FOOTER ==================== -->
   <!-- ==================== EDITORIAL FOOTER ==================== -->
-  <footer class="relative z-10 border-t border-[var(--border-subtle)] bg-[var(--bg-primary)]/60 backdrop-blur-md mt-20">
+  <footer class="relative z-10 border-t border-[var(--border-subtle)] bg-[var(--bg)]/60 backdrop-blur-md mt-20">
     <div class="max-w-6xl mx-auto px-6 sm:px-10 pt-16 pb-36">
       
       <!-- Top Grid: 3 Columns -->
@@ -435,7 +686,7 @@
 
       </div>
 
- <!-- Bottom Bar: Copyright & Credit Disclaimer -->
+      <!-- Bottom Bar: Copyright & Credit Disclaimer -->
       <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] font-en tracking-[0.14em] text-[var(--text-secondary)]/75">
         <p>© 2026 ENA. UI & CURATION · ALL MUSIC & ARTWORKS BELONG TO THEIR RESPECTIVE ARTISTS</p>
         <div class="flex items-center gap-4">
@@ -462,12 +713,12 @@
         <div class="flex items-center gap-2">
           <!-- ปุ่มเปิด/ปิดโหมดช่วยจับเวลาทำซิงก์เนื้อเพลง -->
           <button 
-  id="btn-sync-helper-toggle"
-  onclick="toggleSyncHelper()" 
-  title="เครื่องมือช่วยจับเวลาเนื้อเพลง"
-  class="hidden px-2.5 py-1 rounded-full border border-[var(--border-subtle)] text-[11px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors cursor-pointer">
-  ⏱ จับเวลา
-</button>
+            id="btn-sync-helper-toggle"
+            onclick="toggleSyncHelper()" 
+            title="เครื่องมือช่วยจับเวลาเนื้อเพลง"
+            class="hidden px-2.5 py-1 rounded-full border border-[var(--border-subtle)] text-[11px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors cursor-pointer">
+            ⏱ จับเวลา
+          </button>
 
           <button 
             onclick="toggleLyricsPanel()" 

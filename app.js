@@ -232,7 +232,6 @@ function renderLyricsContent(track) {
   const container = document.getElementById('lyrics-display');
   activeLyricIndex = -1;
 
-  // ถ้าเพลงนี้มี syncedLyrics ให้แสดงแบบซิงก์ทีละท่อน
   if (Array.isArray(track.syncedLyrics) && track.syncedLyrics.length > 0) {
     container.classList.remove('whitespace-pre-line');
     container.innerHTML = `<div class="space-y-2">` + track.syncedLyrics.map((item, idx) => `
@@ -245,7 +244,6 @@ function renderLyricsContent(track) {
       </div>
     `).join('') + `</div>`;
   } else {
-    // ถ้ายังไม่ได้ทำซิงก์ ให้แสดงเนื้อเพลงเต็มแบบเดิม
     container.classList.add('whitespace-pre-line');
     container.textContent = track.lyrics || "";
   }
@@ -275,7 +273,6 @@ function updateSyncedLyricsHighlight(currentTime) {
       if (!el) return;
       if (idx === activeLyricIndex) {
         el.classList.add('active');
-        // เลื่อนหน้าต่างเนื้อเพลงให้ท่อนปัจจุบันอยู่ตรงกลางเสมอ
         if (isLyricsOpen) {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
@@ -316,7 +313,6 @@ function toggleSyncHelper() {
 
 function resetSyncHelper() {
   if (!currentTrack) return;
-  // แยกเนื้อเพลงออกเป็นท่อน ๆ ตามบรรทัดว่าง (ตัดเส้นคั่น --- ออก)
   const raw = (currentTrack.lyrics || "").replace(/-{5,}/g, '\n\n');
   helperBlocks = raw
     .split(/\n\s*\n/)
@@ -343,7 +339,6 @@ function updateSyncHelperUI() {
     progress.textContent = `${helperTimestamps.length} / ${helperBlocks.length} ท่อน`;
   }
 
-  // แสดงตัวอย่างท่อนที่กำลังรอมาร์กเวลาในหน้าต่างเนื้อเพลง
   const container = document.getElementById('lyrics-display');
   if (!isSyncHelperOpen) return;
 
@@ -734,6 +729,11 @@ function resetFilters() {
   setMoodFilter('all');
 }
 
+function jumpToMood(mood) {
+  navigateTo('library');
+  setMoodFilter(mood);
+}
+
 function toggleSaveTrack(id) {
   if (savedTrackIds.includes(id)) {
     savedTrackIds = savedTrackIds.filter(item => item !== id);
@@ -856,41 +856,151 @@ function updatePlayerUI() {
   }
 }
 
-// ==================== THEME TOGGLE (MIDNIGHT / MORNING) ====================
+// ==================== THEME & SETTINGS POPOVER ====================
 function toggleTheme() {
   const isLight = document.body.classList.toggle('light-theme');
-  document.getElementById('icon-moon').classList.toggle('hidden', isLight);
-  document.getElementById('icon-sun').classList.toggle('hidden', !isLight);
   localStorage.setItem('ena_theme', isLight ? 'light' : 'dark');
+  updateSettingsThemeLabel();
 }
 
-// ==================== INITIALIZE ====================
-window.addEventListener('DOMContentLoaded', () => {
-  if (localStorage.getItem('ena_theme') === 'light') {
-    document.body.classList.add('light-theme');
-    document.getElementById('icon-moon').classList.add('hidden');
-    document.getElementById('icon-sun').classList.remove('hidden');
+function toggleSettingsMenu(e) {
+  if (e) e.stopPropagation();
+  const menu = document.getElementById('settings-dropdown');
+  if (!menu) return;
+  menu.classList.toggle('hidden');
+  updateSettingsThemeLabel();
+}
+
+function updateSettingsThemeLabel() {
+  const label = document.getElementById('settings-theme-text');
+  if (!label) return;
+  const isLight = document.body.classList.contains('light-theme');
+  label.textContent = isLight ? 'โหมดกลางวัน (Morning)' : 'โหมดกลางคืน (Midnight)';
+}
+
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('settings-dropdown');
+  const btn = document.getElementById('btn-settings-toggle');
+  if (menu && !menu.classList.contains('hidden')) {
+    if (!menu.contains(e.target) && (!btn || !btn.contains(e.target))) {
+      menu.classList.add('hidden');
+    }
   }
-  updateVolumeUI(30);
-  initDraggableAndResizablePlayer();
-  initRandomSelections();
-  renderFeaturedTracks();
-  renderLibraryTracks();
 });
 
+// ==================== SLEEP TIMER (FADE OUT & STOP) ====================
+let sleepTimerInterval = null;
+let sleepRemainingSeconds = 0;
+let originalVolumeBeforeFade = null;
 
+function setSleepTimer(minutes) {
+  if (sleepTimerInterval) {
+    clearInterval(sleepTimerInterval);
+    sleepTimerInterval = null;
+  }
 
-// พิมพ์รหัสลับ "sync" บนคีย์บอร์ดเพื่อเปิด/ปิดโหมดจับเวลาเนื้อเพลง
+  if (originalVolumeBeforeFade !== null) {
+    realAudioPlayer.volume = originalVolumeBeforeFade;
+    originalVolumeBeforeFade = null;
+  }
+
+  document.querySelectorAll('.sleep-opt-btn').forEach((btn) => {
+    btn.classList.toggle('active', Number(btn.dataset.sleep) === minutes);
+  });
+
+  const countdownEl = document.getElementById('sleep-timer-countdown');
+  const dotEl = document.getElementById('sleep-timer-dot');
+
+  if (minutes <= 0) {
+    sleepRemainingSeconds = 0;
+    if (countdownEl) countdownEl.textContent = 'ปิดอยู่';
+    if (dotEl) dotEl.classList.add('hidden');
+    return;
+  }
+
+  sleepRemainingSeconds = minutes * 60;
+  if (dotEl) dotEl.classList.remove('hidden');
+  updateSleepCountdownDisplay();
+
+  sleepTimerInterval = setInterval(() => {
+    sleepRemainingSeconds--;
+    updateSleepCountdownDisplay();
+
+    // ช่วง 15 วินาทีสุดท้าย: ค่อย ๆ เฟดเสียงเพลงเบาลงอย่างนุ่มนวล
+    if (sleepRemainingSeconds <= 15 && sleepRemainingSeconds > 0) {
+      if (originalVolumeBeforeFade === null) {
+        originalVolumeBeforeFade = realAudioPlayer.volume;
+      }
+      const ratio = sleepRemainingSeconds / 15;
+      realAudioPlayer.volume = Math.max(0, originalVolumeBeforeFade * ratio);
+    }
+
+    // ครบเวลา: หยุดเล่นเพลงและรีเซ็ตเสียงกลับค่าเดิม
+    if (sleepRemainingSeconds <= 0) {
+      clearInterval(sleepTimerInterval);
+      sleepTimerInterval = null;
+
+      if (isPlaying) {
+        togglePlayPause();
+      } else {
+        realAudioPlayer.pause();
+      }
+
+      if (originalVolumeBeforeFade !== null) {
+        realAudioPlayer.volume = originalVolumeBeforeFade;
+        originalVolumeBeforeFade = null;
+      }
+
+      setSleepTimer(0);
+    }
+  }, 1000);
+}
+
+function updateSleepCountdownDisplay() {
+  const countdownEl = document.getElementById('sleep-timer-countdown');
+  if (!countdownEl) return;
+  const mins = Math.floor(sleepRemainingSeconds / 60);
+  const secs = sleepRemainingSeconds % 60;
+  countdownEl.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+// ==================== KEYBOARD SHORTCUTS (SYNC, SPACE, ARROWS) ====================
 let secretKeyBuffer = '';
 
 window.addEventListener('keydown', (e) => {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-  if (e.key.length !== 1) return;
+  const tag = e.target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return;
 
+  // 1. Spacebar: เล่น / หยุดเพลงชั่วคราว
+  if (e.code === 'Space') {
+    e.preventDefault();
+    togglePlayPause();
+    return;
+  }
+
+  // 2. ลูกศรซ้าย / ขวา: กรอถอยหลัง / เดินหน้าทีละ 5 วินาที
+  if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+    if (!isNaN(realAudioPlayer.duration)) {
+      e.preventDefault();
+      const step = e.code === 'ArrowRight' ? 5 : -5;
+      const nextTime = Math.min(Math.max(0, realAudioPlayer.currentTime + step), realAudioPlayer.duration);
+      realAudioPlayer.currentTime = nextTime;
+      updateSyncedLyricsHighlight(nextTime);
+    }
+    return;
+  }
+
+  // 3. พิมพ์รหัสลับ "sync" (รองรับทั้งแป้นอังกฤษและไทย "ผัืแ") เพื่อเปิด/ปิดโหมดจับเวลา
+  if (e.key.length !== 1) return;
   secretKeyBuffer = (secretKeyBuffer + e.key.toLowerCase()).slice(-4);
 
-  if (secretKeyBuffer === 'sync') {
+  if (secretKeyBuffer === 'sync' || secretKeyBuffer === 'ผัืแ') {
     secretKeyBuffer = '';
+    if (!currentTrack) {
+      alert('กรุณากดเล่นเพลงที่ต้องการทำซิงก์ก่อน 1 เพลง แล้วพิมพ์ sync อีกครั้งครับ');
+      return;
+    }
+
     const btn = document.getElementById('btn-sync-helper-toggle');
     if (!btn) return;
 
@@ -906,6 +1016,24 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
+// ==================== MINIMAL AUDIO VISUALIZER ====================
+function injectAndSyncVisualizer() {
+  const titleEl = document.getElementById('player-title');
+  if (!titleEl) return;
+
+  let viz = document.getElementById('ena-mini-visualizer');
+  if (!viz) {
+    viz = document.createElement('span');
+    viz.id = 'ena-mini-visualizer';
+    viz.className = 'ena-visualizer';
+    viz.innerHTML = '<span></span><span></span><span></span><span></span>';
+    titleEl.parentNode.insertBefore(viz, titleEl.nextSibling);
+  }
+
+  const playingNow = !realAudioPlayer.paused || isPlaying;
+  viz.classList.toggle('playing', playingNow);
+}
+
 // ==================== AMBIENT STARDUST & FIREFLIES EFFECT ====================
 function initAmbientParticles() {
   const canvas = document.getElementById('ambient-particles');
@@ -915,7 +1043,6 @@ function initAmbientParticles() {
   let width = (canvas.width = window.innerWidth);
   let height = (canvas.height = window.innerHeight);
 
-  // ปรับจำนวนละอองดาว/หิ่งห้อยตามขนาดหน้าจอ (ประมาณ 45-65 ดวงกำลังสวย)
   const particleCount = Math.min(65, Math.floor((width * height) / 22000));
   const particles = [];
 
@@ -940,7 +1067,6 @@ function initAmbientParticles() {
     reset(initial = false) {
       this.x = Math.random() * width;
       this.y = initial ? Math.random() * height : height + 10;
-      // แบ่งเป็น 2 แบบ: ละอองดาวเม็ดเล็ก กับ หิ่งห้อยดวงใหญ่เรืองแสง
       this.isFirefly = Math.random() > 0.72;
       this.radius = this.isFirefly ? Math.random() * 1.8 + 1.4 : Math.random() * 1.1 + 0.4;
       this.vx = (Math.random() - 0.5) * (this.isFirefly ? 0.35 : 0.18);
@@ -953,17 +1079,14 @@ function initAmbientParticles() {
     update() {
       this.phase += this.twinkleSpeed;
 
-      // การเคลื่อนที่ลอยเอื่อย ๆ คล้ายหิ่งห้อย
       this.x += this.vx + Math.sin(this.phase * 0.7) * (this.isFirefly ? 0.25 : 0.08);
       this.y += this.vy;
 
-      // แรงดึงดูด/คล้อยตามเมาส์เบา ๆ
       const dx = (mouseX - width / 2) * 0.00015;
       const dy = (mouseY - height / 2) * 0.00015;
       this.x += dx * (this.isFirefly ? 2.2 : 1);
       this.y += dy * (this.isFirefly ? 2.2 : 1);
 
-      // วนกลับมาเมื่อลอยพ้นขอบจอ
       if (this.y < -15) this.reset(false);
       if (this.x < -15) this.x = width + 15;
       if (this.x > width + 15) this.x = -15;
@@ -977,7 +1100,6 @@ function initAmbientParticles() {
       ctx.beginPath();
 
       if (this.isFirefly) {
-        // แสงฟุ้งรอบตัวหิ่งห้อย
         const glowRadius = this.radius * 5;
         const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, glowRadius);
 
@@ -995,7 +1117,6 @@ function initAmbientParticles() {
         ctx.fill();
       }
 
-      // แกนกลางของดาว / หิ่งห้อย
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
       ctx.fillStyle = isLight
@@ -1022,11 +1143,18 @@ function initAmbientParticles() {
   animate();
 }
 
-// เริ่มทำงานเอฟเฟกต์ทันทีเมื่อโหลดหน้าเว็บ
-window.addEventListener('DOMContentLoaded', initAmbientParticles);
-
-// เปิดหน้าคลังเพลงพร้อมเลือกหมวดหมู่อารมณ์จาก Footer ทันที
-function jumpToMood(mood) {
-  navigateTo('library');
-  setMoodFilter(mood);
-}
+// ==================== INITIALIZE ====================
+window.addEventListener('DOMContentLoaded', () => {
+  if (localStorage.getItem('ena_theme') === 'light') {
+    document.body.classList.add('light-theme');
+  }
+  updateSettingsThemeLabel();
+  updateVolumeUI(30);
+  initDraggableAndResizablePlayer();
+  initRandomSelections();
+  renderFeaturedTracks();
+  renderLibraryTracks();
+  initAmbientParticles();
+  injectAndSyncVisualizer();
+  setInterval(injectAndSyncVisualizer, 350);
+});
