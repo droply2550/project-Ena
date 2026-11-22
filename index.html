@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ena. — A Quiet Place for Music</title>
+  <meta name="description" content="Ena. พื้นที่เล็ก ๆ สำหรับค้นพบเสียงเพลงในคืนที่เมืองเงียบลง — A quiet place for music." />
+  <meta name="theme-color" content="#0B1220" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Ena. — A Quiet Place for Music" />
+  <meta property="og:description" content="พื้นที่เล็ก ๆ สำหรับค้นพบเสียงเพลงในคืนที่เมืองเงียบลง" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230B1220'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%236FA8E8'/%3E%3C/svg%3E" />
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -33,7 +39,7 @@
 
       <!-- 2. ตรงกลางเป๊ะ: ตัวเลือกเมนู (หน้าแรก / คลังเพลง / เกี่ยวกับ) -->
       <nav class="flex items-center justify-center gap-6 sm:gap-10 text-sm">
-        <button id="nav-home" onclick="navigateTo('home')" class="nav-link active pb-1 transition-colors cursor-pointer">
+        <button id="nav-home" aria-current="page" onclick="navigateTo('home')" class="nav-link active pb-1 transition-colors cursor-pointer">
           หน้าแรก
         </button>
         <button id="nav-library" onclick="navigateTo('library')" class="nav-link pb-1 transition-colors cursor-pointer">
@@ -85,7 +91,7 @@
         <!-- Left Column -->
         <div class="lg:col-span-6 space-y-7">
           <div class="flex items-center gap-3 text-[11px] font-en tracking-[0.2em] uppercase text-[var(--text-secondary)]">
-            <span class="w-6 h-[1px] bg-[var(--accent)]/60"></span>
+            <span class="w-6 h-[1px] xo-bg-accent-60"></span>
             <span>WELCOME TO ENA</span>
           </div>
 
@@ -201,7 +207,7 @@
         </div>
 
         <div class="lg:col-span-5 flex flex-col justify-between h-full min-h-[160px] lg:border-l border-[var(--border-subtle)] lg:pl-10 relative z-10">
-          <div class="font-jp text-xs text-[var(--text-secondary)]/70 tracking-widest leading-relaxed">
+          <div class="font-jp text-xs xo-text-text-secondary-70 tracking-widest leading-relaxed">
             静かな夜に、ひとつの音楽を。<br />
             <span class="text-[11px] font-en tracking-wider opacity-75">In a quiet night, a single piece of music.</span>
           </div>
@@ -238,7 +244,7 @@
             id="search-input" 
             oninput="filterTracks()"
             placeholder="ค้นหาชื่อเพลง, ศิลปิน, บรรยากาศ..." 
-            class="w-full bg-[var(--surface)] border border-[var(--border-subtle)] rounded-full py-2.5 pl-10 pr-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/60 focus:outline-none focus:border-[var(--accent)] transition-colors"
+            class="w-full bg-[var(--surface)] border border-[var(--border-subtle)] rounded-full py-2.5 pl-10 pr-4 text-sm text-[var(--text-primary)] placeholder:xo-text-text-secondary-60 focus:outline-none focus:border-[var(--accent)] transition-colors"
           />
           <svg class="w-4 h-4 text-[var(--text-secondary)] absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
             <circle cx="11" cy="11" r="7"></circle>
@@ -311,7 +317,7 @@
               恵那 · エナ · Blue Hour
             </p>
           </div>
-          <p class="text-xs text-[var(--text-secondary)]/80 font-light leading-relaxed">
+          <p class="text-xs xo-text-text-secondary-80 font-light leading-relaxed">
             พยางค์สั้นที่เรียบง่าย อบอุ่น และเป็นกันเอง เหมือนชื่อเพื่อนคนหนึ่งที่นั่งฟังเพลงอยู่ข้าง ๆ
           </p>
         </div>
@@ -349,7 +355,7 @@
             <p class="text-sm text-[var(--text-secondary)] leading-relaxed font-light">
               เพลงที่ชวนทบทวนตัวเอง เงียบงัน และลึกซึ้ง เหมาะกับช่วงเวลาหลังเที่ยงคืนที่ความคิดชัดเจนที่สุด
             </p>
-            <p class="text-[11px] font-en text-[var(--text-secondary)]/75 pt-1">
+            <p class="text-[11px] font-en xo-text-text-secondary-75 pt-1">
               เช่น Engeki, Irony, Reason for existence
             </p>
           </div>
@@ -363,7 +369,7 @@
             <p class="text-sm text-[var(--text-secondary)] leading-relaxed font-light">
               เพลงที่ปลอบประโลมใจ โอบกอดความเปราะบาง และให้กำลังใจให้ก้าวเดินต่อไปในวันที่เหนื่อยล้า
             </p>
-            <p class="text-[11px] font-en text-[var(--text-secondary)]/75 pt-1">
+            <p class="text-[11px] font-en xo-text-text-secondary-75 pt-1">
               เช่น Itsuka, more than words
             </p>
           </div>
@@ -377,7 +383,7 @@
             <p class="text-sm text-[var(--text-secondary)] leading-relaxed font-light">
               เพลงที่เข้ากับเสียงสายฝนและหน้าต่างเปียกชื้น เต็มไปด้วยอารมณ์ที่เข้มข้นและการเยียวยา
             </p>
-            <p class="text-[11px] font-en text-[var(--text-secondary)]/75 pt-1">
+            <p class="text-[11px] font-en xo-text-text-secondary-75 pt-1">
               เช่น Blooming in the Mud
             </p>
           </div>
@@ -391,98 +397,20 @@
             <p class="text-sm text-[var(--text-secondary)] leading-relaxed font-light">
               เพลงโปร่งเบา ล่องลอยเหมือนเกลียวคลื่นและฟองอากาศ ช่วยผ่อนคลายสมองในวันที่วุ่นวาย
             </p>
-            <p class="text-[11px] font-en text-[var(--text-secondary)]/75 pt-1">
+            <p class="text-[11px] font-en xo-text-text-secondary-75 pt-1">
               เช่น Bubbles
             </p>
           </div>
         </div>
       </div>
 
-      <!-- 03 / ROOM CONTROLS & SHORTCUTS -->
-      <div class="editorial-card rounded-2xl p-8 sm:p-10 space-y-6">
-        <div class="space-y-1.5">
-          <span class="text-[11px] font-en tracking-[0.18em] uppercase text-[var(--accent)]">03 / USER GUIDE</span>
-          <h2 class="text-2xl font-bold tracking-tight">คู่มือการใช้งานห้องฟังเพลง</h2>
-          <p class="text-sm text-[var(--text-secondary)] font-light">
-            ลูกเล่นและคีย์ลัดที่ซ่อนอยู่เพื่อให้การฟังเพลงของคุณลื่นไหลที่สุด
-          </p>
-        </div>
+      
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-          <!-- Shortcut 1: Spacebar -->
-          <div class="flex items-start gap-3.5 p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)]/30">
-            <div class="px-2.5 py-1 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg)] text-[11px] font-en font-semibold text-[var(--accent)] shrink-0">
-              Space
-            </div>
-            <div class="space-y-1">
-              <h4 class="text-sm font-medium text-[var(--text-primary)]">เล่น / หยุดเพลงชั่วคราว</h4>
-              <p class="text-xs text-[var(--text-secondary)] font-light leading-relaxed">
-                กด Spacebar ได้ทันทีจากทุกหน้าของเว็บ (ทำงานอัตโนมัติเมื่อไม่ได้พิมพ์ในช่องค้นหา)
-              </p>
-            </div>
-          </div>
+          
 
-          <!-- Shortcut 2: Arrow Keys -->
-          <div class="flex items-start gap-3.5 p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)]/30">
-            <div class="px-2.5 py-1 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg)] text-[11px] font-en font-semibold text-[var(--accent)] shrink-0">
-              ← / →
-            </div>
-            <div class="space-y-1">
-              <h4 class="text-sm font-medium text-[var(--text-primary)]">กรอเพลงถอยหลัง / เดินหน้า</h4>
-              <p class="text-xs text-[var(--text-secondary)] font-light leading-relaxed">
-                กดปุ่มลูกศรซ้ายหรือขวาบนคีย์บอร์ดเพื่อข้ามช่วงเพลงทีละ 5 วินาที
-              </p>
-            </div>
-          </div>
+        
 
-          <!-- Feature 3: Interactive Synced Lyrics -->
-          <div class="flex items-start gap-3.5 p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)]/30">
-            <div class="w-8 h-8 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg)] flex items-center justify-center text-[var(--accent)] shrink-0">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h12M4 14h9"></path>
-              </svg>
-            </div>
-            <div class="space-y-1">
-              <h4 class="text-sm font-medium text-[var(--text-primary)]">คลิกเนื้อเพลงเพื่อกระโดดท่อน</h4>
-              <p class="text-xs text-[var(--text-secondary)] font-light leading-relaxed">
-                เปิดแผงเนื้อเพลงด้านขวา แล้วคลิกที่บรรทัดที่ต้องการเพื่อย้อนฟังท่อนนั้นทันที
-              </p>
-            </div>
-          </div>
-
-          <!-- Feature 4: Draggable & Resizable Player -->
-          <div class="flex items-start gap-3.5 p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)]/30">
-            <div class="w-8 h-8 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg)] flex items-center justify-center text-[var(--accent)] shrink-0">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
-              </svg>
-            </div>
-            <div class="space-y-1">
-              <h4 class="text-sm font-medium text-[var(--text-primary)]">ลากย้าย & ปรับขนาด Mini-Player</h4>
-              <p class="text-xs text-[var(--text-secondary)] font-light leading-relaxed">
-                จับแถบด้านบนของตัวเล่นเพื่อย้ายมุมวาง หรือลากมุมขวาล่างเพื่อย่อ-ขยายขนาด
-              </p>
-            </div>
-          </div>
-
-          <!-- Feature 5: Sleep Timer -->
-          <div class="md:col-span-2 flex items-start gap-3.5 p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)]/30">
-            <div class="w-8 h-8 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg)] flex items-center justify-center text-[var(--accent)] shrink-0">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-              </svg>
-            </div>
-            <div class="space-y-1">
-              <h4 class="text-sm font-medium text-[var(--text-primary)]">Sleep Timer & สลับธีม (ปุ่มฟันเฟืองมุมขวาบน)</h4>
-              <p class="text-xs text-[var(--text-secondary)] font-light leading-relaxed">
-                ตั้งเวลาปิดเพลงอัตโนมัติ 15, 30 หรือ 60 นาที สำหรับเปิดฟังก่อนนอน โดยระบบจะค่อย ๆ เฟดเสียงเพลงเบาลงอย่างนุ่มนวลในช่วง 15 วินาทีสุดท้ายก่อนหยุดเล่น
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 04 / COPYRIGHT & CREDITS -->
+      <!-- 03 / COPYRIGHT & CREDITS -->
       <div class="editorial-card rounded-2xl p-8 sm:p-10 space-y-5">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div class="space-y-1">
@@ -515,7 +443,7 @@
         </div>
       </div>
 
-      <!-- 05 / SOUND EXPERIENCE CTA -->
+      <!-- 04 / SOUND EXPERIENCE CTA -->
       <div class="note-banner rounded-2xl p-8 sm:p-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div class="space-y-2 max-w-xl">
           <div class="flex items-center gap-3">
@@ -539,7 +467,7 @@
   </main>
 
   <!-- ==================== EDITORIAL FOOTER ==================== -->
-  <footer class="relative z-10 border-t border-[var(--border-subtle)] bg-[var(--bg)]/60 backdrop-blur-md mt-20">
+  <footer class="relative z-10 border-t border-[var(--border-subtle)] xo-bg-bg-60 backdrop-blur-md mt-20">
     <div class="max-w-6xl mx-auto px-6 sm:px-10 pt-16 pb-36">
       
       <!-- Top Grid: 3 Columns -->
@@ -551,7 +479,7 @@
             <span>Ena</span><span class="w-1.5 h-1.5 rounded-full bg-[var(--accent)] mt-2.5"></span>
           </button>
           
-          <p class="font-jp text-xs tracking-[0.18em] text-[var(--accent)]/90">
+          <p class="font-jp text-xs tracking-[0.18em] xo-text-accent-90">
             静かな夜に、ひとつの音楽を。
           </p>
           
@@ -560,7 +488,7 @@
           </p>
 
           <!-- Ambient Status Pill -->
-          <div class="pt-2 inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border border-[var(--border-subtle)] bg-[var(--surface-elevated)]/50 text-[11px] font-en tracking-[0.16em] text-[var(--text-secondary)]">
+          <div class="pt-2 inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border border-[var(--border-subtle)] xo-bg-surface-elevated-50 text-[11px] font-en tracking-[0.16em] text-[var(--text-secondary)]">
             <span class="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse"></span>
             <span>MIDNIGHT LISTENING ROOM </span>
           </div>
@@ -583,7 +511,7 @@
                 <button onclick="navigateTo('about')" class="hover:text-[var(--accent)] transition-colors cursor-pointer">เกี่ยวกับ Ena.</button>
               </li>
               <li>
-                <button onclick="playRecommendedTrack()" class="hover:text-[var(--accent)] transition-colors cursor-pointer">สุ่มเพลงแนะนำ ↗</button>
+                <button onclick="playRandomTrack()" class="hover:text-[var(--accent)] transition-colors cursor-pointer">สุ่มเพลงแนะนำ ↗</button>
               </li>
             </ul>
           </div>
@@ -635,7 +563,7 @@
       </div>
 
       <!-- Bottom Bar: Copyright & Credit Disclaimer -->
-      <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] font-en tracking-[0.14em] text-[var(--text-secondary)]/75">
+      <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] font-en tracking-[0.14em] xo-text-text-secondary-75">
         <p>© 2026 ENA. UI & CURATION · ALL MUSIC & ARTWORKS BELONG TO THEIR RESPECTIVE ARTISTS</p>
         <div class="flex items-center gap-4">
           <span>NON-COMMERCIAL LISTENING ARCHIVE</span>
@@ -684,7 +612,7 @@
       </div>
 
       <!-- แผงเครื่องมือช่วยจับเวลา (ซ่อนไว้เป็นค่าเริ่มต้น) -->
-      <div id="sync-helper-panel" class="hidden p-3.5 rounded-xl bg-[var(--surface-elevated)] border border-[var(--accent)]/30 space-y-2.5 text-xs">
+      <div id="sync-helper-panel" class="hidden p-3.5 rounded-xl bg-[var(--surface-elevated)] border xo-border-accent-30 space-y-2.5 text-xs">
         <div class="flex items-center justify-between">
           <span class="font-medium text-[var(--accent)]">ตัวช่วยจับเวลาซิงก์เนื้อเพลง (สำหรับผู้ดูแลระบบ)</span>
           <span id="sync-helper-progress" class="font-en text-[11px] text-[var(--text-secondary)]">0 / 0 ท่อน</span>
@@ -699,7 +627,7 @@
           <button onclick="resetSyncHelper()" class="px-2.5 py-2 rounded-lg border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer">
             เริ่มใหม่
           </button>
-          <button onclick="copySyncedLyricsCode()" class="px-2.5 py-2 rounded-lg bg-[var(--accent)]/20 text-[var(--accent)] hover:bg-[var(--accent)]/30 font-medium cursor-pointer">
+          <button onclick="copySyncedLyricsCode()" class="px-2.5 py-2 rounded-lg xo-bg-accent-20 text-[var(--accent)] hover:xo-bg-accent-30 font-medium cursor-pointer">
             คัดลอกโค้ด
           </button>
         </div>
@@ -707,12 +635,12 @@
     </div>
 
     <!-- Scrollable Lyrics Area -->
-    <div id="lyrics-display" class="flex-1 overflow-y-auto py-7 pr-2 text-[15px] leading-[2.0] text-[var(--text-primary)]/95 whitespace-pre-line font-light scroll-smooth">
+    <div id="lyrics-display" class="flex-1 overflow-y-auto py-7 pr-2 text-[15px] leading-[2.0] xo-text-text-primary-95 whitespace-pre-line font-light scroll-smooth">
       <!-- เนื้อเพลงแสดงตรงนี้ -->
     </div>
 
     <!-- Subtle Bottom Spacer for Mini-Player Clearance -->
-    <div class="pt-4 pb-24 border-t border-[var(--border-subtle)] flex items-center justify-between text-[11px] font-en tracking-[0.16em] text-[var(--text-secondary)]/70 shrink-0">
+    <div class="pt-4 pb-24 border-t border-[var(--border-subtle)] flex items-center justify-between text-[11px] font-en tracking-[0.16em] xo-text-text-secondary-70 shrink-0">
       <span>ENA LISTENING ROOM</span>
       <span id="drawer-song-duration">05:06</span>
     </div>
@@ -724,7 +652,7 @@
     
     <!-- แถบด้านบนสำหรับจับลาก (Drag Handle) + ปุ่มย่อ/ขยายเร็ว -->
     <div id="player-drag-bar" title="ลากเพื่อย้ายตำแหน่งตัวเล่นเพลง" class="flex items-center justify-between pb-2.5 mb-2 border-b border-white/5 cursor-grab active:cursor-grabbing">
-      <div class="flex items-center gap-2 text-[10px] font-en tracking-[0.18em] uppercase text-[var(--text-secondary)]/75 pointer-events-none">
+      <div class="flex items-center gap-2 text-[10px] font-en tracking-[0.18em] uppercase xo-text-text-secondary-75 pointer-events-none">
         <!-- Grip Dots Icon -->
         <svg class="w-3.5 h-3.5 opacity-70" fill="currentColor" viewBox="0 0 24 24">
           <circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/>
@@ -782,7 +710,7 @@
         <div class="min-w-0">
           <div class="flex items-center gap-2">
             <h4 id="player-title" class="text-sm font-semibold truncate text-[var(--text-primary)]">Engeki</h4>
-            <span id="player-tag" class="player-extra-badge hidden md:inline-block text-[10px] font-en uppercase tracking-wider px-2 py-0.5 rounded-full bg-[var(--accent)]/15 text-[var(--accent)] shrink-0">INDIE</span>
+            <span id="player-tag" class="player-extra-badge hidden md:inline-block text-[10px] font-en uppercase tracking-wider px-2 py-0.5 rounded-full xo-bg-accent-15 text-[var(--accent)] shrink-0">INDIE</span>
           </div>
           <p id="player-artist" class="text-xs text-[var(--text-secondary)] truncate">Nightcord at 25:00</p>
         </div>
@@ -790,6 +718,10 @@
 
       <!-- Center: Playback Controls -->
       <div class="flex items-center gap-1 sm:gap-2.5 shrink-0">
+        <button id="btn-shuffle" onclick="toggleShuffle()" aria-label="Shuffle" aria-pressed="false" title="สุ่มลำดับ: ปิด" class="queue-btn hidden sm:inline-flex p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+        </button>
+
         <button onclick="prevTrack()" aria-label="Previous" class="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer">
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
         </button>
@@ -801,6 +733,10 @@
 
         <button onclick="nextTrack()" aria-label="Next" class="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer">
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+        </button>
+        <button id="btn-repeat" onclick="cycleRepeat()" aria-label="Repeat" aria-pressed="true" title="เล่นวนทั้งรายการ" class="queue-btn hidden sm:inline-flex relative p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer lyrics-btn-active">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m17 2 4 4-4 4M3 11v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 13v1a4 4 0 0 1-4 4H3"/></svg>
+          <span id="repeat-badge" class="hidden absolute -top-0.5 -right-0.5 text-[8px] leading-none font-en font-bold text-[var(--accent)]">1</span>
         </button>
       </div>
 
@@ -856,7 +792,7 @@
     </div>
 
     <!-- มุมขวาล่างสำหรับจับลากขยาย / ย่อขนาด (Resize Handle) -->
-    <div id="player-resize-handle" title="ลากเพื่อปรับขนาดกว้าง-แคบ" class="absolute bottom-1 right-1 w-4 h-4 cursor-nwse-resize flex items-end justify-end p-0.5 text-[var(--text-secondary)]/50 hover:text-[var(--accent)] transition-colors">
+    <div id="player-resize-handle" title="ลากเพื่อปรับขนาดกว้าง-แคบ" class="absolute bottom-1 right-1 w-4 h-4 cursor-nwse-resize flex items-end justify-end p-0.5 xo-text-text-secondary-50 hover:text-[var(--accent)] transition-colors">
       <svg class="w-3 h-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
         <path d="M11 3L3 11M11 7L7 11" stroke-linecap="round"/>
       </svg>
@@ -864,17 +800,17 @@
 
   </div>
 
-  <!-- ==================== DRAGGABLE SETTINGS MODAL (ป็อปอัพตั้งค่ากลางจอ) ==================== -->
-  <div id="settings-modal-backdrop" onclick="closeSettingsModal()" class="hidden fixed inset-0 z-[60] bg-[#060B14]/50 backdrop-blur-xs transition-opacity"></div>
+  <!-- ==================== DRAGGABLE SETTINGS MODAL (รวมตั้งค่า + คีย์ลัด & คู่มือ) ==================== -->
+  <div id="settings-modal-backdrop" onclick="closeSettingsModal()" class="hidden fixed inset-0 z-[60] bg-[#060B14]/50 backdrop-blur-sm transition-opacity"></div>
 
   <div 
     id="settings-dropdown" 
-    role="dialog"
-    aria-label="Room Settings"
-    class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] w-[92%] max-w-[360px] rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg)]/95 backdrop-blur-xl shadow-2xl overflow-hidden select-none">
+    role="dialog" aria-modal="true"
+    aria-label="ตั้งค่าและคู่มือการใช้งานห้องฟังเพลง"
+    class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] w-[92%] max-w-[440px] rounded-2xl border border-[var(--border-subtle)] xo-bg-bg-95 backdrop-blur-xl shadow-2xl overflow-hidden select-none">
     
     <!-- แถบหัวข้อด้านบน (จับลากขยับได้ + ปุ่มกากบาทปิด) -->
-    <div id="settings-drag-bar" title="ลากเพื่อย้ายตำแหน่งหน้าต่างตั้งค่า" class="flex items-center justify-between px-5 py-3.5 border-b border-[var(--border-subtle)] bg-[var(--surface-elevated)]/40 cursor-grab active:cursor-grabbing">
+    <div id="settings-drag-bar" title="ลากเพื่อย้ายตำแหน่งหน้าต่างตั้งค่า" class="flex items-center justify-between px-5 py-3.5 border-b border-[var(--border-subtle)] xo-bg-surface-elevated-40 cursor-grab active:cursor-grabbing">
       <div class="flex items-center gap-2 text-xs font-en tracking-[0.18em] uppercase text-[var(--text-primary)] font-semibold pointer-events-none">
         <svg class="w-3.5 h-3.5 text-[var(--accent)]" fill="currentColor" viewBox="0 0 24 24">
           <circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/>
@@ -884,11 +820,10 @@
         <span>ROOM SETTINGS · ตั้งค่า</span>
       </div>
 
-      <!-- ปุ่มกากบาทปิด -->
       <button 
         onclick="closeSettingsModal()" 
         title="ปิดหน้าต่างตั้งค่า"
-        aria-label="Close Settings"
+        aria-label="ปิดหน้าต่างตั้งค่า"
         class="w-7 h-7 rounded-full border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors cursor-pointer">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
@@ -896,35 +831,64 @@
       </button>
     </div>
 
-    <!-- เนื้อหาด้านในป็อปอัพ -->
-    <div class="p-5 space-y-5">
-      <!-- ส่วนที่ 1: โหมดหน้าจอ (Dark / Light) -->
+    <!-- แถบสลับแท็บ (ทั่วไป / คีย์ลัด & คู่มือ) -->
+    <div class="grid grid-cols-2 border-b border-[var(--border-subtle)] xo-bg-surface-elevated-30 text-xs">
+      <button 
+        id="tab-btn-general"
+        onclick="switchSettingsTab('general')" 
+        class="settings-tab-btn active py-2.5 font-medium text-center border-b-2 border-[var(--accent)] text-[var(--text-primary)] transition-colors cursor-pointer">
+        ตั้งค่าทั่วไป
+      </button>
+      <button 
+        id="tab-btn-shortcuts"
+        onclick="switchSettingsTab('shortcuts')" 
+        class="settings-tab-btn py-2.5 font-medium text-center border-b-2 border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5">
+        <span>คีย์ลัด & คู่มือ</span>
+        <span class="px-1.5 py-0.2 rounded bg-[var(--bg)] border border-[var(--border-subtle)] text-[10px] font-en text-[var(--accent)]">?</span>
+      </button>
+    </div>
+
+    <!-- ==================== แท็บที่ 1: ตั้งค่าทั่วไป ==================== -->
+    <div id="settings-panel-general" class="p-5 space-y-5">
+      <!-- โหมดหน้าจอ (Dark / Light) -->
       <div class="space-y-2.5">
         <div class="flex items-center justify-between">
           <span class="text-[11px] font-en tracking-[0.18em] uppercase text-[var(--text-secondary)]">Atmosphere Theme</span>
         </div>
         <button 
           onclick="toggleTheme(); updateSettingsThemeLabel();" 
-          class="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-[var(--border-subtle)] hover:border-[var(--accent)] bg-[var(--surface-elevated)]/40 text-xs text-[var(--text-primary)] transition-colors cursor-pointer">
+          class="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-[var(--border-subtle)] hover:border-[var(--accent)] xo-bg-surface-elevated-40 text-xs text-[var(--text-primary)] transition-colors cursor-pointer">
           <span id="settings-theme-text">โหมดกลางคืน (Midnight)</span>
-          <span class="text-[10px] font-en tracking-wider px-2.5 py-0.5 rounded-full bg-[var(--accent)]/15 text-[var(--accent)] font-medium">สลับธีม</span>
+          <span class="text-[10px] font-en tracking-wider px-2.5 py-0.5 rounded-full xo-bg-accent-15 text-[var(--accent)] font-medium">สลับธีม</span>
         </button>
       </div>
 
       <div class="border-t border-[var(--border-subtle)]"></div>
 
-      <!-- ส่วนที่ 2: ตั้งเวลาปิดเพลงอัตโนมัติ (Sleep Timer) -->
+      <!-- ตั้งเวลาปิดเพลงอัตโนมัติ (Sleep Timer) -->
       <div class="space-y-2.5">
         <div class="flex items-center justify-between">
           <span class="text-[11px] font-en tracking-[0.18em] uppercase text-[var(--text-secondary)]">Sleep Timer</span>
-          <span id="sleep-timer-countdown" class="text-xs font-en text-[var(--accent)] font-semibold">ปิดอยู่</span>
+          <div class="flex items-center gap-2">
+            <span id="sleep-timer-countdown" class="text-xs font-en text-[var(--accent)] font-semibold">ปิดอยู่</span>
+            <button 
+              id="btn-settings-extend-15"
+              onclick="extendSleepTimer15()" 
+              title="เพิ่มเวลาอีก 15 นาที (หรือเปลี่ยนจากโหมดจบเพลงเป็น 15 นาที)"
+              class="px-2 py-0.5 rounded-md xo-bg-accent-15 hover:xo-bg-accent-20 text-[10px] font-en text-[var(--accent)] font-medium transition-colors cursor-pointer">
+              +15 นาที
+            </button>
+          </div>
         </div>
-        <p class="text-xs text-[var(--text-secondary)]/80 font-light leading-relaxed">
-          ค่อย ๆ หรี่เสียงเพลงจนเงียบสนิทเมื่อครบเวลา
+        <p class="text-xs xo-text-text-secondary-80 font-light leading-relaxed">
+          ค่อย ๆ หรี่เสียงเพลงจนเงียบสนิทเมื่อครบเวลา (โหมดจบเพลงนี้จะยกเลิกหากคุณเปลี่ยนเพลงเอง)
         </p>
-        <div class="grid grid-cols-4 gap-2 pt-1">
+        <div class="grid grid-cols-5 gap-1.5 pt-1">
           <button onclick="setSleepTimer(0)" data-sleep="0" class="sleep-opt-btn active py-2 rounded-xl border border-[var(--border-subtle)] text-xs font-en transition-colors cursor-pointer">
             ปิด
+          </button>
+          <button onclick="setSleepTimer('end')" data-sleep="end" class="sleep-opt-btn py-2 rounded-xl border border-[var(--border-subtle)] text-[11px] transition-colors cursor-pointer">
+            จบเพลงนี้
           </button>
           <button onclick="setSleepTimer(15)" data-sleep="15" class="sleep-opt-btn py-2 rounded-xl border border-[var(--border-subtle)] text-xs font-en transition-colors cursor-pointer">
             15m
@@ -937,6 +901,92 @@
           </button>
         </div>
       </div>
+    </div>
+
+    <!-- ==================== แท็บที่ 2: คีย์ลัด & คู่มือการใช้งาน (ไม่รวมคีย์ลับ) ==================== -->
+    <div id="settings-panel-shortcuts" class="hidden p-5 max-h-[65vh] overflow-y-auto space-y-5 text-xs">
+      
+      <!-- หมวดที่ 1: คีย์ลัดคีย์บอร์ด -->
+      <div class="space-y-2">
+        <span class="text-[11px] font-en tracking-[0.18em] uppercase text-[var(--accent)] font-semibold">KEYBOARD SHORTCUTS · คีย์ลัด</span>
+        
+        <div class="divide-y divide-[var(--border-subtle)] border border-[var(--border-subtle)] rounded-xl xo-bg-surface-elevated-30 px-3.5">
+          <div class="flex items-center justify-between py-2.5">
+            <span class="text-[var(--text-secondary)]">เล่น / หยุดเพลงชั่วคราว</span>
+            <kbd class="px-2.5 py-0.5 rounded bg-[var(--bg)] border border-[var(--border-subtle)] font-en text-[var(--accent)] font-semibold">Space</kbd>
+          </div>
+          <div class="flex items-center justify-between py-2.5">
+            <span class="text-[var(--text-secondary)]">กรอถอยหลัง / เดินหน้า 5 วินาที</span>
+            <div class="flex items-center gap-1">
+              <kbd class="px-2 py-0.5 rounded bg-[var(--bg)] border border-[var(--border-subtle)] font-en text-[var(--accent)] font-semibold">←</kbd>
+              <kbd class="px-2 py-0.5 rounded bg-[var(--bg)] border border-[var(--border-subtle)] font-en text-[var(--accent)] font-semibold">→</kbd>
+            </div>
+          </div>
+          <div class="flex items-center justify-between py-2.5">
+            <span class="text-[var(--text-secondary)]">เพิ่ม / ลดระดับเสียงทีละ 5%</span>
+            <div class="flex items-center gap-1">
+              <kbd class="px-2 py-0.5 rounded bg-[var(--bg)] border border-[var(--border-subtle)] font-en text-[var(--accent)] font-semibold">↑</kbd>
+              <kbd class="px-2 py-0.5 rounded bg-[var(--bg)] border border-[var(--border-subtle)] font-en text-[var(--accent)] font-semibold">↓</kbd>
+            </div>
+          </div>
+          <div class="flex items-center justify-between py-2.5">
+            <span class="text-[var(--text-secondary)]">ปิด / เปิดเสียง (Mute)</span>
+            <kbd class="px-2.5 py-0.5 rounded bg-[var(--bg)] border border-[var(--border-subtle)] font-en text-[var(--accent)] font-semibold">M</kbd>
+          </div>
+          <div class="flex items-center justify-between py-2.5">
+            <span class="text-[var(--text-secondary)]">เพลงถัดไป / เพลงก่อนหน้า</span>
+            <div class="flex items-center gap-1">
+              <kbd class="px-2.5 py-0.5 rounded bg-[var(--bg)] border border-[var(--border-subtle)] font-en text-[var(--accent)] font-semibold">N</kbd>
+              <kbd class="px-2.5 py-0.5 rounded bg-[var(--bg)] border border-[var(--border-subtle)] font-en text-[var(--accent)] font-semibold">P</kbd>
+            </div>
+          </div>
+          <div class="flex items-center justify-between py-2.5">
+            <span class="text-[var(--text-secondary)]">เปิด / ปิดหน้าต่างเนื้อเพลง</span>
+            <kbd class="px-2.5 py-0.5 rounded bg-[var(--bg)] border border-[var(--border-subtle)] font-en text-[var(--accent)] font-semibold">L</kbd>
+          </div>
+          <div class="flex items-center justify-between py-2.5">
+            <span class="text-[var(--text-secondary)]">เลือกการ์ดเพลง / กดปุ่มหัวใจ</span>
+            <div class="flex items-center gap-1">
+              <kbd class="px-2 py-0.5 rounded bg-[var(--bg)] border border-[var(--border-subtle)] font-en text-[var(--accent)] font-semibold">Tab</kbd>
+              <kbd class="px-2 py-0.5 rounded bg-[var(--bg)] border border-[var(--border-subtle)] font-en text-[var(--accent)] font-semibold">Enter</kbd>
+            </div>
+          </div>
+          <div class="flex items-center justify-between py-2.5">
+            <span class="text-[var(--text-secondary)]">เปิด / ปิดหน้าคีย์ลัดนี้</span>
+            <kbd class="px-2.5 py-0.5 rounded bg-[var(--bg)] border border-[var(--border-subtle)] font-en text-[var(--accent)] font-semibold">?</kbd>
+          </div>
+          <div class="flex items-center justify-between py-2.5">
+            <span class="text-[var(--text-secondary)]">ปิดหน้าต่างตั้งค่า</span>
+            <kbd class="px-2.5 py-0.5 rounded bg-[var(--bg)] border border-[var(--border-subtle)] font-en text-[var(--accent)] font-semibold">Esc</kbd>
+          </div>
+        </div>
+      </div>
+
+      <!-- หมวดที่ 2: ลูกเล่นในห้องฟังเพลง -->
+      <div class="space-y-2">
+        <span class="text-[11px] font-en tracking-[0.18em] uppercase text-[var(--accent)] font-semibold">ROOM FEATURES · ลูกเล่นเพิ่มเติม</span>
+        <div class="space-y-2">
+          <div class="p-3 rounded-xl border border-[var(--border-subtle)] xo-bg-surface-elevated-30 space-y-0.5">
+            <div class="font-medium text-[var(--text-primary)]">คลิกเนื้อเพลงเพื่อกระโดดท่อน</div>
+            <p class="text-[11px] text-[var(--text-secondary)] font-light leading-relaxed">
+              เปิดแผงเนื้อเพลงด้านขวา แล้วคลิกที่บรรทัดที่ต้องการเพื่อย้อนฟังท่อนนั้นทันที
+            </p>
+          </div>
+          <div class="p-3 rounded-xl border border-[var(--border-subtle)] xo-bg-surface-elevated-30 space-y-0.5">
+            <div class="font-medium text-[var(--text-primary)]">ลากย้าย & ปรับขนาด Mini-Player</div>
+            <p class="text-[11px] text-[var(--text-secondary)] font-light leading-relaxed">
+              จับแถบด้านบนของตัวเล่นเพื่อย้ายมุมวาง หรือลากมุมขวาล่างเพื่อย่อ-ขยายขนาด
+            </p>
+          </div>
+          <div class="p-3 rounded-xl border border-[var(--border-subtle)] xo-bg-surface-elevated-30 space-y-0.5">
+            <div class="font-medium text-[var(--text-primary)]">เล่นต่อจากที่ค้างไว้ (Resume Playback)</div>
+            <p class="text-[11px] text-[var(--text-secondary)] font-light leading-relaxed">
+              ระบบจดจำเพลงและวินาทีล่าสุดให้อัตโนมัติเมื่อเปิดกลับมาใหม่ (กดปิดตัวเล่น ✕ เพื่อล้างค่า)
+            </p>
+          </div>
+        </div>
+      </div>
+
     </div>
 
   </div>

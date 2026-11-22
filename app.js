@@ -3,7 +3,12 @@
 
 let currentPage = 'home';
 let currentMood = 'all';
-let savedTrackIds = JSON.parse(localStorage.getItem('ena_saved_tracks') || '[]');
+let savedTrackIds = (() => {
+  try {
+    const v = JSON.parse(localStorage.getItem('ena_saved_tracks') || '[]');
+    return Array.isArray(v) ? v : [];
+  } catch (e) { return []; }
+})();
 let currentTrack = null;
 let recommendedTrackId = null;
 let isPlaying = false;
@@ -18,8 +23,33 @@ let helperTimestamps = [];
 
 // Volume State (เริ่มต้นที่ 30%)
 let currentVolume = 0.30;
-let previousVolume = 0.30;
-let isMuted = false;
+try {
+  const sv = parseFloat(localStorage.getItem('ena_volume'));
+  if (!isNaN(sv) && sv >= 0 && sv <= 1) currentVolume = sv;
+} catch (e) {}
+let previousVolume = currentVolume > 0 ? currentVolume : 0.30;
+let isMuted = currentVolume === 0;
+let sleepFadeMultiplier = 1; // ตัวคูณสำหรับเฟดเสียงช่วง Sleep Timer (1 = ปกติ, 0 = เงียบสนิท)
+
+// Resume Playback State (จำเพลงและเวลาล่าสุด)
+const RESUME_STORAGE_KEY = 'ena_resume_state';
+let lastResumeSaveAt = 0;
+
+function parseDurationToSeconds(durStr) {
+  if (!durStr || typeof durStr !== 'string') return 0;
+  const parts = durStr.split(':').map(Number);
+  if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+    return parts[0] * 60 + parts[1];
+  }
+  return 0;
+}
+
+function getEffectiveDuration() {
+  if (realAudioPlayer.duration && !isNaN(realAudioPlayer.duration) && isFinite(realAudioPlayer.duration)) {
+    return realAudioPlayer.duration;
+  }
+  return currentTrack ? parseDurationToSeconds(currentTrack.duration) : 0;
+}
 
 // กรองเฉพาะเพลงที่มีข้อมูลจริง (ข้ามเพลงตัวอย่างที่ยังไม่ใส่ชื่อ)
 function getValidTracks() {
@@ -36,19 +66,33 @@ function shuffleArray(array) {
   return copy;
 }
 
-// ==================== REAL AUDIO & AMBIENT SYNTH ENGINE ====================
+// ==================== UNIFIED AUDIO VOLUME ENGINE ====================
 let realAudioPlayer = new Audio();
 let audioCtx = null;
 let chordInterval = null;
+let synthClockInterval = null;
+let synthElapsedSeconds = 0;
 let noiseNode = null;
 let masterGain = null;
+
+// จุดเดียวสำหรับตั้งความดังเสียง (ครอบคลุมทั้งเพลงจริง, โหมด Synth และ Sleep Timer Fade)
+function applyMasterVolume() {
+  const baseVol = isMuted ? 0 : currentVolume;
+  const effectiveVol = Math.max(0, Math.min(1, baseVol * sleepFadeMultiplier));
+
+  realAudioPlayer.volume = effectiveVol;
+
+  if (masterGain && audioCtx) {
+    masterGain.gain.setTargetAtTime(effectiveVol * 0.32, audioCtx.currentTime, 0.04);
+  }
+}
 
 function initAudioContext() {
   if (!audioCtx) {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     audioCtx = new AudioContext();
     masterGain = audioCtx.createGain();
-    masterGain.gain.value = isMuted ? 0 : currentVolume * 0.32;
+    masterGain.gain.value = (isMuted ? 0 : currentVolume) * sleepFadeMultiplier * 0.32;
     masterGain.connect(audioCtx.destination);
   }
   if (audioCtx.state === 'suspended') {
@@ -63,6 +107,10 @@ function stopAmbientSound() {
     clearInterval(chordInterval);
     chordInterval = null;
   }
+  if (synthClockInterval) {
+    clearInterval(synthClockInterval);
+    synthClockInterval = null;
+  }
   if (noiseNode) {
     try {
       noiseNode.stop();
@@ -74,19 +122,25 @@ function stopAmbientSound() {
 
 function startAmbientSound(track) {
   stopAmbientSound();
+  applyMasterVolume();
 
   if (track.audioUrl && track.audioUrl.trim() !== "") {
     if (!realAudioPlayer.src.endsWith(encodeURI(track.audioUrl))) {
       realAudioPlayer.src = track.audioUrl;
     }
-    realAudioPlayer.volume = isMuted ? 0 : currentVolume;
     realAudioPlayer.play().catch(err => {
       console.warn("ไม่สามารถเล่นไฟล์เสียงได้ กรุณาตรวจสอบที่อยู่ไฟล์:", err);
+      if (err && err.name === 'AbortError') return;
+      isPlaying = false;
+      updatePlayerUI();
+      refreshPlayIcons();
+      showToast('เล่นเพลงไม่ได้ — ตรวจสอบไฟล์: ' + track.audioUrl);
     });
-    realAudioPlayer.onended = () => nextTrack();
+    realAudioPlayer.onended = handleTrackEnded;
     return;
   }
 
+  // โหมด Synth Ambient (กรณีไม่ได้ใส่ไฟล์เสียงจริง)
   initAudioContext();
 
   const bufferSize = audioCtx.sampleRate * 3;
@@ -139,11 +193,26 @@ function startAmbientSound(track) {
 
   playChord();
   chordInterval = setInterval(playChord, 4000);
+
+  // ตัวนับเวลาจำลองสำหรับโหมด Synth เพื่อให้แถบกรอ, เนื้อเพลงซิงก์ และ Sleep Timer ทำงานสมบูรณ์
+  const totalSec = parseDurationToSeconds(track.duration) || 180;
+  synthClockInterval = setInterval(() => {
+    if (!isPlaying) return;
+    synthElapsedSeconds += 0.5;
+    updateSeekUI(synthElapsedSeconds, totalSec);
+    updateSyncedLyricsHighlight(synthElapsedSeconds);
+    maybeSaveResumeState(synthElapsedSeconds);
+
+    if (synthElapsedSeconds >= totalSec) {
+      synthElapsedSeconds = 0;
+      handleTrackEnded();
+    }
+  }, 500);
 }
 
 // ==================== VOLUME CONTROLS ====================
 function changeVolume(val) {
-  const numeric = Number(val);
+  const numeric = Math.max(0, Math.min(100, Number(val)));
   currentVolume = numeric / 100;
   isMuted = numeric === 0;
 
@@ -151,13 +220,18 @@ function changeVolume(val) {
     previousVolume = currentVolume;
   }
 
-  realAudioPlayer.volume = currentVolume;
-
-  if (masterGain && audioCtx) {
-    masterGain.gain.setTargetAtTime(currentVolume * 0.32, audioCtx.currentTime, 0.04);
-  }
-
+  applyMasterVolume();
   updateVolumeUI(numeric);
+  try { localStorage.setItem('ena_volume', String(currentVolume)); } catch (e) {}
+}
+
+function adjustVolumeBy(deltaPercent) {
+  const currentPercent = isMuted ? 0 : Math.round(currentVolume * 100);
+  const nextPercent = Math.max(0, Math.min(100, currentPercent + deltaPercent));
+  const slider = document.getElementById('volume-slider');
+  if (slider) slider.value = nextPercent;
+  changeVolume(nextPercent);
+  showToast(`ระดับเสียง ${nextPercent}%`);
 }
 
 function toggleMute() {
@@ -165,21 +239,18 @@ function toggleMute() {
   if (isMuted || currentVolume === 0) {
     isMuted = false;
     currentVolume = previousVolume > 0 ? previousVolume : 0.30;
-    slider.value = Math.round(currentVolume * 100);
+    if (slider) slider.value = Math.round(currentVolume * 100);
   } else {
     previousVolume = currentVolume;
     isMuted = true;
     currentVolume = 0;
-    slider.value = 0;
+    if (slider) slider.value = 0;
   }
 
-  realAudioPlayer.volume = isMuted ? 0 : currentVolume;
-
-  if (masterGain && audioCtx) {
-    masterGain.gain.setTargetAtTime(isMuted ? 0 : currentVolume * 0.32, audioCtx.currentTime, 0.04);
-  }
-
-  updateVolumeUI(Number(slider.value));
+  applyMasterVolume();
+  const percent = isMuted ? 0 : Math.round(currentVolume * 100);
+  updateVolumeUI(percent);
+  showToast(isMuted ? 'ปิดเสียงแล้ว (Mute)' : `เปิดเสียง (${percent}%)`);
 }
 
 function updateVolumeUI(percent) {
@@ -187,16 +258,96 @@ function updateVolumeUI(percent) {
   const iconOn = document.getElementById('icon-vol-on');
   const iconMute = document.getElementById('icon-vol-mute');
 
-  slider.style.background = `linear-gradient(to right, var(--accent) 0%, var(--accent) ${percent}%, rgba(168, 182, 204, 0.25) ${percent}%, rgba(168, 182, 204, 0.25) 100%)`;
+  if (slider) {
+    slider.style.background = `linear-gradient(to right, var(--accent) 0%, var(--accent) ${percent}%, rgba(168, 182, 204, 0.25) ${percent}%, rgba(168, 182, 204, 0.25) 100%)`;
+  }
 
-  if (percent === 0) {
-    iconOn.classList.add('hidden');
-    iconMute.classList.remove('hidden');
-  } else {
-    iconOn.classList.remove('hidden');
-    iconMute.classList.add('hidden');
+  if (iconOn && iconMute) {
+    if (percent === 0) {
+      iconOn.classList.add('hidden');
+      iconMute.classList.remove('hidden');
+    } else {
+      iconOn.classList.remove('hidden');
+      iconMute.classList.add('hidden');
+    }
   }
 }
+
+// ==================== RESUME PLAYBACK (เล่นต่อจากที่ค้างไว้) ====================
+function saveResumeStateNow(customTime) {
+  if (!currentTrack) return;
+  const isReal = currentTrack.audioUrl && currentTrack.audioUrl.trim() !== "";
+  const time = typeof customTime === 'number'
+    ? customTime
+    : (isReal ? realAudioPlayer.currentTime : synthElapsedSeconds);
+
+  try {
+    localStorage.setItem(RESUME_STORAGE_KEY, JSON.stringify({
+      id: currentTrack.id,
+      time: Math.max(0, Number(time.toFixed(2)))
+    }));
+    lastResumeSaveAt = Date.now();
+  } catch (e) {}
+}
+
+function maybeSaveResumeState(time) {
+  if (Date.now() - lastResumeSaveAt >= 2000) {
+    saveResumeStateNow(time);
+  }
+}
+
+function clearResumeState() {
+  try { localStorage.removeItem(RESUME_STORAGE_KEY); } catch (e) {}
+}
+
+function restoreResumeState() {
+  try {
+    const raw = localStorage.getItem(RESUME_STORAGE_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (!saved || typeof saved.id !== 'number') return;
+
+    const track = getValidTracks().find(t => t.id === saved.id);
+    if (!track) {
+      clearResumeState();
+      return;
+    }
+
+    const savedTime = Math.max(0, Number(saved.time) || 0);
+    currentTrack = track;
+    isPlaying = false;
+
+    const isReal = track.audioUrl && track.audioUrl.trim() !== "";
+    if (isReal) {
+      realAudioPlayer.src = track.audioUrl;
+      realAudioPlayer.preload = 'metadata';
+      const applySavedTime = () => {
+        const dur = getEffectiveDuration();
+        const clamped = dur > 0 ? Math.min(savedTime, Math.max(0, dur - 0.5)) : savedTime;
+        realAudioPlayer.currentTime = clamped;
+        updateSeekUI(clamped, dur || parseDurationToSeconds(track.duration));
+        updateSyncedLyricsHighlight(clamped);
+      };
+      if (realAudioPlayer.readyState >= 1) {
+        applySavedTime();
+      } else {
+        realAudioPlayer.addEventListener('loadedmetadata', applySavedTime, { once: true });
+      }
+    } else {
+      synthElapsedSeconds = savedTime;
+    }
+
+    updatePlayerUI();
+    updateSeekUI(savedTime, parseDurationToSeconds(track.duration));
+    updateSyncedLyricsHighlight(savedTime);
+    refreshPlayIcons();
+    updateMediaSession();
+  } catch (e) {}
+}
+
+window.addEventListener('beforeunload', () => {
+  if (currentTrack) saveResumeStateNow();
+});
 
 // ==================== SEEK / PROGRESS BAR & SYNCED LYRICS ====================
 function formatTime(seconds) {
@@ -206,23 +357,59 @@ function formatTime(seconds) {
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
+function updateSeekUI(currentSec, totalSec) {
+  const slider = document.getElementById('seek-slider');
+  const curEl = document.getElementById('current-time');
+  const totEl = document.getElementById('total-duration');
+  if (!slider || !curEl || !totEl) return;
+
+  const safeTotal = totalSec > 0 ? totalSec : 0;
+  const safeCur = Math.max(0, Math.min(currentSec || 0, safeTotal || currentSec || 0));
+  const percent = safeTotal > 0 ? (safeCur / safeTotal) * 100 : 0;
+
+  slider.value = percent;
+  slider.style.background = `linear-gradient(to right, var(--accent) 0%, var(--accent) ${percent}%, rgba(168, 182, 204, 0.2) ${percent}%, rgba(168, 182, 204, 0.2) 100%)`;
+  curEl.textContent = formatTime(safeCur);
+  if (safeTotal > 0) {
+    totEl.textContent = formatTime(safeTotal);
+  }
+}
+
 function seekTrack(percent) {
   if (!currentTrack) return;
-  const slider = document.getElementById('seek-slider');
-  
-  slider.style.background = `linear-gradient(to right, var(--accent) 0%, var(--accent) ${percent}%, rgba(168, 182, 204, 0.2) ${percent}%, rgba(168, 182, 204, 0.2) 100%)`;
+  const numericPercent = Math.max(0, Math.min(100, Number(percent)));
+  const totalSec = getEffectiveDuration();
 
-  if (realAudioPlayer.duration) {
-    realAudioPlayer.currentTime = (percent / 100) * realAudioPlayer.duration;
-    document.getElementById('current-time').textContent = formatTime(realAudioPlayer.currentTime);
-    updateSyncedLyricsHighlight(realAudioPlayer.currentTime);
+  if (totalSec > 0) {
+    const nextSec = (numericPercent / 100) * totalSec;
+    const isReal = currentTrack.audioUrl && currentTrack.audioUrl.trim() !== "";
+    if (isReal) {
+      realAudioPlayer.currentTime = nextSec;
+    } else {
+      synthElapsedSeconds = nextSec;
+    }
+    updateSeekUI(nextSec, totalSec);
+    updateSyncedLyricsHighlight(nextSec);
+    saveResumeStateNow(nextSec);
   }
 }
 
 function seekToSeconds(seconds) {
-  if (!currentTrack || !realAudioPlayer.duration) return;
-  realAudioPlayer.currentTime = Math.max(0, Math.min(seconds, realAudioPlayer.duration));
-  updateSyncedLyricsHighlight(realAudioPlayer.currentTime);
+  if (!currentTrack) return;
+  const totalSec = getEffectiveDuration();
+  if (totalSec <= 0) return;
+
+  const clamped = Math.max(0, Math.min(seconds, totalSec));
+  const isReal = currentTrack.audioUrl && currentTrack.audioUrl.trim() !== "";
+  if (isReal) {
+    realAudioPlayer.currentTime = clamped;
+  } else {
+    synthElapsedSeconds = clamped;
+  }
+  updateSeekUI(clamped, totalSec);
+  updateSyncedLyricsHighlight(clamped);
+  saveResumeStateNow(clamped);
+
   if (!isPlaying) {
     togglePlayPause();
   }
@@ -237,7 +424,10 @@ function renderLyricsContent(track) {
     container.innerHTML = `<div class="space-y-2">` + track.syncedLyrics.map((item, idx) => `
       <div 
         id="lyric-line-${idx}" 
+        role="button"
+        tabindex="0"
         onclick="seekToSeconds(${item.time})"
+        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();seekToSeconds(${item.time});}"
         title="คลิกเพื่อเล่นท่อนนี้ (${formatTime(item.time)})"
         class="lyric-line whitespace-pre-line">
         ${item.text}
@@ -285,16 +475,11 @@ function updateSyncedLyricsHighlight(currentTime) {
 
 realAudioPlayer.addEventListener('timeupdate', () => {
   if (!realAudioPlayer.duration) return;
-  const percent = (realAudioPlayer.currentTime / realAudioPlayer.duration) * 100;
-  const slider = document.getElementById('seek-slider');
-  
-  slider.value = percent;
-  slider.style.background = `linear-gradient(to right, var(--accent) 0%, var(--accent) ${percent}%, rgba(168, 182, 204, 0.2) ${percent}%, rgba(168, 182, 204, 0.2) 100%)`;
-
-  document.getElementById('current-time').textContent = formatTime(realAudioPlayer.currentTime);
-  document.getElementById('total-duration').textContent = formatTime(realAudioPlayer.duration);
-
+  updateSeekUI(realAudioPlayer.currentTime, realAudioPlayer.duration);
   updateSyncedLyricsHighlight(realAudioPlayer.currentTime);
+  if (isPlaying) {
+    maybeSaveResumeState(realAudioPlayer.currentTime);
+  }
 });
 
 // ==================== SYNC HELPER (เครื่องมือช่วยจับเวลาเนื้อเพลง) ====================
@@ -325,7 +510,9 @@ function resetSyncHelper() {
 
 function markNextLyricTimestamp() {
   if (!currentTrack || helperTimestamps.length >= helperBlocks.length) return;
-  const time = Number(realAudioPlayer.currentTime.toFixed(1));
+  const isReal = currentTrack.audioUrl && currentTrack.audioUrl.trim() !== "";
+  const rawTime = isReal ? realAudioPlayer.currentTime : synthElapsedSeconds;
+  const time = Number(rawTime.toFixed(1));
   helperTimestamps.push({
     time,
     text: helperBlocks[helperTimestamps.length]
@@ -347,7 +534,7 @@ function updateSyncHelperUI() {
     const marked = helperTimestamps[idx];
     const isNext = idx === helperTimestamps.length;
     return `
-      <div class="p-3 rounded-xl border ${isNext ? 'border-[var(--accent)] bg-[var(--accent)]/10' : 'border-[var(--border-subtle)] opacity-70'} whitespace-pre-line">
+      <div class="p-3 rounded-xl border ${isNext ? 'border-[var(--accent)] xo-bg-accent-10' : 'border-[var(--border-subtle)] opacity-70'} whitespace-pre-line">
         <div class="text-[11px] font-en text-[var(--accent)] mb-1">
           ${marked ? `✓ บันทึกเวลาแล้ว: ${marked.time}s` : isNext ? '👉 กดมาร์กเมื่อถึงท่อนนี้' : `ท่อนที่ ${idx + 1}`}
         </div>
@@ -364,12 +551,14 @@ function copySyncedLyricsCode() {
   }
 
   const formatted = "syncedLyrics: [\n" + helperTimestamps.map(item => {
-    const escaped = item.text.replace(/`/g, '\\`');
+    const escaped = item.text.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
     return `  { time: ${item.time}, text: \`${escaped}\` }`;
   }).join(",\n") + "\n],";
 
   navigator.clipboard.writeText(formatted).then(() => {
     alert(`คัดลอกโค้ด syncedLyrics จำนวน ${helperTimestamps.length} ท่อนเรียบร้อย!\nนำไปวางในเพลง "${currentTrack.title}" ในไฟล์ tracks.js ได้เลยครับ`);
+  }).catch(() => {
+    window.prompt('คัดลอกอัตโนมัติไม่ได้ กด Ctrl+C เพื่อคัดลอกโค้ดนี้:', formatted);
   });
 }
 
@@ -477,6 +666,15 @@ function initDraggableAndResizablePlayer() {
     }
   }
 
+  window.addEventListener('resize', () => {
+    if (player.style.transform !== 'none') return;
+    const rect = player.getBoundingClientRect();
+    const maxLeft = Math.max(8, window.innerWidth - rect.width - 8);
+    const maxTop = Math.max(8, window.innerHeight - rect.height - 8);
+    player.style.left = `${Math.max(8, Math.min(rect.left, maxLeft))}px`;
+    player.style.top = `${Math.max(8, Math.min(rect.top, maxTop))}px`;
+  });
+
   dragBar.addEventListener('mousedown', onDragStart);
   dragBar.addEventListener('touchstart', onDragStart, { passive: true });
 
@@ -539,7 +737,8 @@ function toggleLyricsPanel(forceState) {
     drawer.classList.remove('translate-x-full');
     btn.classList.add('lyrics-btn-active');
     if (currentTrack && !isSyncHelperOpen) {
-      updateSyncedLyricsHighlight(realAudioPlayer.currentTime);
+      const isReal = currentTrack.audioUrl && currentTrack.audioUrl.trim() !== "";
+      updateSyncedLyricsHighlight(isReal ? realAudioPlayer.currentTime : synthElapsedSeconds);
     }
   } else {
     drawer.classList.add('translate-x-full');
@@ -547,15 +746,29 @@ function toggleLyricsPanel(forceState) {
   }
 }
 
-// ==================== CARD RENDERING ====================
+// ==================== CARD RENDERING & ACCESSIBILITY ====================
+function handleCardKeydown(event, callback) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    callback();
+  }
+}
+
 function createTrackCardHTML(track, indexLabel) {
   const isSaved = savedTrackIds.includes(track.id);
   const isCurrentPlaying = currentTrack && currentTrack.id === track.id && isPlaying;
   const hasCover = track.coverUrl && track.coverUrl.trim() !== "";
+  const saveLabel = isSaved ? `นำ ${track.title} ออกจากเพลงที่เก็บไว้` : `เก็บเพลง ${track.title} ไว้ฟัง`;
 
   return `
     <article class="editorial-card rounded-2xl overflow-hidden flex flex-col justify-between group">
-      <div onclick="playTrackById(${track.id})" class="card-artwork-box relative h-56 p-5 flex flex-col justify-between cursor-pointer overflow-hidden">
+      <div 
+        role="button"
+        tabindex="0"
+        aria-label="เล่นเพลง ${track.title} โดย ${track.artist}"
+        onclick="playTrackById(${track.id})" 
+        onkeydown="handleCardKeydown(event, () => playTrackById(${track.id}))"
+        class="card-artwork-box relative h-56 p-5 flex flex-col justify-between cursor-pointer overflow-hidden">
         
         ${hasCover ? `
           <img src="${track.coverUrl}" alt="${track.title}" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
@@ -573,10 +786,15 @@ function createTrackCardHTML(track, indexLabel) {
           </span>
 
           <button 
+            type="button"
+            data-save-btn="${track.id}"
+            aria-label="${saveLabel}"
+            aria-pressed="${isSaved}"
             onclick="event.stopPropagation(); toggleSaveTrack(${track.id})" 
-            title="${isSaved ? 'นำออกจากเพลงที่เก็บไว้' : 'เก็บเพลงนี้ไว้ฟัง'}"
+            onkeydown="event.stopPropagation()"
+            title="${saveLabel}"
             class="w-8 h-8 rounded-full bg-[#0B1220]/45 hover:bg-[#0B1220]/75 backdrop-blur-sm flex items-center justify-center text-[#F4F7FC] transition-colors cursor-pointer">
-            <svg class="w-3.5 h-3.5 ${isSaved ? 'fill-[#6FA8E8] text-[#6FA8E8]' : 'fill-none text-[#F4F7FC]/85'}" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <svg data-save-icon="${track.id}" class="w-3.5 h-3.5 ${isSaved ? 'fill-[#6FA8E8] text-[#6FA8E8]' : 'fill-none text-[#F4F7FC]/85'}" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
             </svg>
           </button>
@@ -584,7 +802,7 @@ function createTrackCardHTML(track, indexLabel) {
 
         <div class="relative z-10 flex items-center justify-between mt-auto">
           <span class="text-[11px] font-en text-[#F4F7FC]/85 drop-shadow-sm">${track.duration}</span>
-          <div class="w-10 h-10 rounded-full glass-pill flex items-center justify-center text-[#F4F7FC] group-hover:scale-105 group-hover:bg-[#6FA8E8] group-hover:text-[#0B1220] transition-all">
+          <div data-play-icon="${track.id}" class="w-10 h-10 rounded-full glass-pill flex items-center justify-center text-[#F4F7FC] group-hover:scale-105 group-hover:bg-[#6FA8E8] group-hover:text-[#0B1220] transition-all">
             ${isCurrentPlaying 
               ? `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`
               : `<svg class="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`
@@ -593,7 +811,13 @@ function createTrackCardHTML(track, indexLabel) {
         </div>
       </div>
 
-      <div onclick="playTrackById(${track.id})" class="p-6 flex-1 flex flex-col justify-between space-y-4 cursor-pointer">
+      <div 
+        role="button"
+        tabindex="0"
+        aria-label="เล่นเพลง ${track.title} โดย ${track.artist}"
+        onclick="playTrackById(${track.id})" 
+        onkeydown="handleCardKeydown(event, () => playTrackById(${track.id}))"
+        class="p-6 flex-1 flex flex-col justify-between space-y-4 cursor-pointer">
         <div class="space-y-1.5">
           <p class="text-[10px] font-en tracking-[0.18em] uppercase text-[var(--accent)] font-medium">
             ${track.category}
@@ -606,7 +830,7 @@ function createTrackCardHTML(track, indexLabel) {
           </p>
         </div>
 
-        <p class="text-xs text-[var(--text-secondary)]/90 leading-relaxed font-light pt-3 border-t border-[var(--border-subtle)]">
+        <p class="text-xs xo-text-text-secondary-90 leading-relaxed font-light pt-3 border-t border-[var(--border-subtle)]">
           ${track.description}
         </p>
       </div>
@@ -624,7 +848,9 @@ function initRandomSelections() {
   randomFeaturedList = shuffled.slice(0, 3);
 
   if (shuffled.length > 0) {
-    const rec = shuffled[Math.floor(Math.random() * shuffled.length)];
+    // พยายามเลือกเพลงแนะนำบน Hero ที่ไม่ซ้ำกับ 3 เพลงแรก (ถ้ามีเพลงมากกว่า 3 เพลง)
+    const pool = shuffled.length > 3 ? shuffled.slice(3) : shuffled;
+    const rec = pool[Math.floor(Math.random() * pool.length)];
     recommendedTrackId = rec.id;
 
     const recBadge = document.getElementById('hero-rec-badge');
@@ -637,9 +863,14 @@ function initRandomSelections() {
 function playRecommendedTrack() {
   const validTracks = getValidTracks();
   if (validTracks.length === 0) return;
+  const rec = validTracks.find(t => t.id === recommendedTrackId) || validTracks[0];
+  playTrackById(rec.id, true);
+}
 
-  const randomPick = validTracks[Math.floor(Math.random() * validTracks.length)];
-  playTrackById(randomPick.id);
+function playRandomTrack() {
+  const validTracks = getValidTracks();
+  if (validTracks.length === 0) return;
+  playTrackById(validTracks[Math.floor(Math.random() * validTracks.length)].id, true);
 }
 
 function renderFeaturedTracks() {
@@ -658,24 +889,8 @@ function renderFeaturedTracks() {
 function renderLibraryTracks() {
   const container = document.getElementById('library-tracks-grid');
   const emptyState = document.getElementById('library-empty');
-  const query = (document.getElementById('search-input')?.value || '').trim().toLowerCase();
 
-  const validTracks = getValidTracks();
-
-  let filtered = validTracks.filter(track => {
-    const matchesMood = 
-      currentMood === 'all' ? true :
-      currentMood === 'Saved' ? savedTrackIds.includes(track.id) :
-      track.mood === currentMood;
-
-    const matchesQuery = !query || 
-      track.title.toLowerCase().includes(query) ||
-      track.artist.toLowerCase().includes(query) ||
-      track.category.toLowerCase().includes(query) ||
-      track.description.toLowerCase().includes(query);
-
-    return matchesMood && matchesQuery;
-  });
+  const filtered = getFilteredTracks();
 
   if (filtered.length === 0) {
     container.innerHTML = '';
@@ -689,22 +904,50 @@ function renderLibraryTracks() {
     }).join('');
   }
 
-  document.getElementById('saved-count').textContent = `(${savedTrackIds.length})`;
+  const savedCountEl = document.getElementById('saved-count');
+  if (savedCountEl) savedCountEl.textContent = `(${savedTrackIds.length})`;
 }
 
 // ==================== NAVIGATION & FILTERS ====================
-function navigateTo(pageId) {
+const PAGES = ['home', 'library', 'about'];
+
+function showPage(pageId) {
   currentPage = pageId;
-  
+
   document.querySelectorAll('.page-view').forEach(sec => sec.classList.remove('active'));
   document.getElementById(`page-${pageId}`).classList.add('active');
 
-  document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('active'));
-  document.getElementById(`nav-${pageId}`).classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(btn => {
+    btn.classList.remove('active');
+    btn.removeAttribute('aria-current');
+  });
+  const navBtn = document.getElementById(`nav-${pageId}`);
+  navBtn.classList.add('active');
+  navBtn.setAttribute('aria-current', 'page');
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (pageId === 'library') renderLibraryTracks();
 }
+
+function setHash(h) {
+  if (location.hash === '#' + h) { applyHash(); return; }
+  location.hash = h;
+}
+
+function applyHash() {
+  let raw = '';
+  try { raw = decodeURIComponent(location.hash.slice(1)); } catch (e) {}
+  const [page, mood] = raw.split(':');
+  const target = PAGES.includes(page) ? page : 'home';
+  showPage(target);
+  if (target === 'library' && mood) setMoodFilter(mood);
+}
+
+function navigateTo(pageId) {
+  setHash(pageId);
+}
+
+window.addEventListener('hashchange', applyHash);
 
 function setMoodFilter(mood) {
   currentMood = mood;
@@ -730,8 +973,35 @@ function resetFilters() {
 }
 
 function jumpToMood(mood) {
-  navigateTo('library');
-  setMoodFilter(mood);
+  setHash('library:' + encodeURIComponent(mood));
+}
+
+// อัปเดตปุ่มหัวใจโดยไม่ Re-render การ์ดทั้งใบ (รักษา Focus ไม่ให้หลุด)
+function refreshSaveIcons(trackId) {
+  const track = getValidTracks().find(t => t.id === trackId);
+  const isSaved = savedTrackIds.includes(trackId);
+  const label = track
+    ? (isSaved ? `นำ ${track.title} ออกจากเพลงที่เก็บไว้` : `เก็บเพลง ${track.title} ไว้ฟัง`)
+    : (isSaved ? 'นำออกจากเพลงที่เก็บไว้' : 'เก็บเพลงนี้ไว้ฟัง');
+
+  document.querySelectorAll(`[data-save-btn="${trackId}"]`).forEach(btn => {
+    btn.setAttribute('aria-pressed', String(isSaved));
+    btn.setAttribute('aria-label', label);
+    btn.setAttribute('title', label);
+  });
+
+  document.querySelectorAll(`[data-save-icon="${trackId}"]`).forEach(svg => {
+    if (isSaved) {
+      svg.classList.remove('fill-none', 'text-[#F4F7FC]/85');
+      svg.classList.add('fill-[#6FA8E8]', 'text-[#6FA8E8]');
+    } else {
+      svg.classList.remove('fill-[#6FA8E8]', 'text-[#6FA8E8]');
+      svg.classList.add('fill-none', 'text-[#F4F7FC]/85');
+    }
+  });
+
+  const savedCountEl = document.getElementById('saved-count');
+  if (savedCountEl) savedCountEl.textContent = `(${savedTrackIds.length})`;
 }
 
 function toggleSaveTrack(id) {
@@ -741,12 +1011,18 @@ function toggleSaveTrack(id) {
     savedTrackIds.push(id);
   }
   localStorage.setItem('ena_saved_tracks', JSON.stringify(savedTrackIds));
-  renderFeaturedTracks();
-  renderLibraryTracks();
+
+  // ถ้ากำลังเปิดแท็บ "เพลงที่เก็บไว้" อยู่และกดเอาออก ให้รีเฟรชรายการในหน้าคลังเพลง
+  if (currentPage === 'library' && currentMood === 'Saved') {
+    renderLibraryTracks();
+    refreshSaveIcons(id);
+  } else {
+    refreshSaveIcons(id);
+  }
 }
 
 // ==================== PLAYER CONTROLS ====================
-function playTrackById(id) {
+function playTrackById(id, userInitiated = true) {
   const track = getValidTracks().find(t => t.id === id);
   if (!track) return;
 
@@ -755,14 +1031,23 @@ function playTrackById(id) {
     return;
   }
 
+  // หากตั้ง Sleep Timer แบบ "จบเพลงนี้" ไว้ แล้วผู้ใช้เปลี่ยนเพลงเอง ให้ยกเลิกโหมดนั้น
+  if (userInitiated && sleepTimerMode === 'end') {
+    setSleepTimer(0);
+    showToast('ยกเลิกตัวตั้งเวลา "จบเพลงนี้" เนื่องจากเปลี่ยนเพลง');
+  }
+
   realAudioPlayer.currentTime = 0;
+  synthElapsedSeconds = 0;
 
   currentTrack = track;
   isPlaying = true;
   updatePlayerUI();
+  updateSeekUI(0, parseDurationToSeconds(track.duration));
   startAmbientSound(track);
-  renderFeaturedTracks();
-  renderLibraryTracks();
+  refreshPlayIcons();
+  updateMediaSession();
+  saveResumeStateNow(0);
 }
 
 function togglePlayPause() {
@@ -773,26 +1058,41 @@ function togglePlayPause() {
     startAmbientSound(currentTrack);
   } else {
     stopAmbientSound();
+    saveResumeStateNow();
   }
-  updatePlayerUI();
-  renderFeaturedTracks();
-  renderLibraryTracks();
+  updatePlayPauseButtonUI();
+  refreshPlayIcons();
 }
 
-function nextTrack() {
-  const validTracks = getValidTracks();
-  if (!currentTrack || validTracks.length === 0) return;
-  const idx = validTracks.findIndex(t => t.id === currentTrack.id);
-  const next = validTracks[(idx + 1) % validTracks.length];
-  playTrackById(next.id);
+function nextTrack(auto) {
+  if (!currentTrack) return;
+  const isAuto = auto === true;
+  const next = pickNext(1, isAuto);
+  if (!next) {
+    isPlaying = false;
+    stopAmbientSound();
+    updatePlayPauseButtonUI();
+    refreshPlayIcons();
+    return;
+  }
+  playQueueTrack(next, !isAuto);
 }
 
 function prevTrack() {
-  const validTracks = getValidTracks();
-  if (!currentTrack || validTracks.length === 0) return;
-  const idx = validTracks.findIndex(t => t.id === currentTrack.id);
-  const prev = validTracks[(idx - 1 + validTracks.length) % validTracks.length];
-  playTrackById(prev.id);
+  if (!currentTrack) return;
+  const isReal = currentTrack.audioUrl && currentTrack.audioUrl.trim() !== "";
+  const curTime = isReal ? realAudioPlayer.currentTime : synthElapsedSeconds;
+
+  if (curTime > 3) {
+    if (isReal) realAudioPlayer.currentTime = 0;
+    else synthElapsedSeconds = 0;
+    updateSeekUI(0, getEffectiveDuration());
+    updateSyncedLyricsHighlight(0);
+    saveResumeStateNow(0);
+    return;
+  }
+  const prev = pickNext(-1, false);
+  if (prev) playQueueTrack(prev, true);
 }
 
 function closePlayer() {
@@ -800,11 +1100,30 @@ function closePlayer() {
   currentTrack = null;
   stopAmbientSound();
   realAudioPlayer.currentTime = 0;
+  synthElapsedSeconds = 0;
+  clearResumeState();
   toggleLyricsPanel(false);
   const player = document.getElementById('mini-player');
   player.classList.add('player-hidden');
-  renderFeaturedTracks();
-  renderLibraryTracks();
+  refreshPlayIcons();
+  updateMediaSession();
+}
+
+function updatePlayPauseButtonUI() {
+  const iconPlay = document.getElementById('icon-play');
+  const iconPause = document.getElementById('icon-pause');
+  const eq = document.getElementById('player-eq');
+  if (!iconPlay || !iconPause || !eq) return;
+
+  if (isPlaying) {
+    iconPlay.classList.add('hidden');
+    iconPause.classList.remove('hidden');
+    eq.classList.remove('paused');
+  } else {
+    iconPlay.classList.remove('hidden');
+    iconPause.classList.add('hidden');
+    eq.classList.add('paused');
+  }
 }
 
 function updatePlayerUI() {
@@ -812,11 +1131,10 @@ function updatePlayerUI() {
   const player = document.getElementById('mini-player');
   player.classList.remove('player-hidden');
 
-  const seekSlider = document.getElementById('seek-slider');
-  seekSlider.value = 0;
-  seekSlider.style.background = `linear-gradient(to right, var(--accent) 0%, var(--accent) 0%, rgba(168, 182, 204, 0.2) 0%, rgba(168, 182, 204, 0.2) 100%)`;
-  document.getElementById('current-time').textContent = "00:00";
-  document.getElementById('total-duration').textContent = currentTrack.duration;
+  const isReal = currentTrack.audioUrl && currentTrack.audioUrl.trim() !== "";
+  const curTime = isReal ? realAudioPlayer.currentTime : synthElapsedSeconds;
+  const totalSec = getEffectiveDuration() || parseDurationToSeconds(currentTrack.duration);
+  updateSeekUI(curTime, totalSec);
 
   const playerArt = document.getElementById('player-art');
   if (currentTrack.coverUrl && currentTrack.coverUrl.trim() !== "") {
@@ -841,19 +1159,7 @@ function updatePlayerUI() {
     renderLyricsContent(currentTrack);
   }
 
-  const iconPlay = document.getElementById('icon-play');
-  const iconPause = document.getElementById('icon-pause');
-  const eq = document.getElementById('player-eq');
-
-  if (isPlaying) {
-    iconPlay.classList.add('hidden');
-    iconPause.classList.remove('hidden');
-    eq.classList.remove('paused');
-  } else {
-    iconPlay.classList.remove('hidden');
-    iconPause.classList.add('hidden');
-    eq.classList.add('paused');
-  }
+  updatePlayPauseButtonUI();
 }
 
 // ==================== THEME & DRAGGABLE SETTINGS MODAL ====================
@@ -957,57 +1263,132 @@ function initDraggableSettingsModal() {
   window.addEventListener('touchend', onDragEnd);
 }
 
+// ==================== SETTINGS TABS & SHORTCUTS VIEW (?) ====================
+function switchSettingsTab(tabName) {
+  const isShortcuts = tabName === 'shortcuts';
+  const panelGeneral = document.getElementById('settings-panel-general');
+  const panelShortcuts = document.getElementById('settings-panel-shortcuts');
+  const btnGeneral = document.getElementById('tab-btn-general');
+  const btnShortcuts = document.getElementById('tab-btn-shortcuts');
+
+  if (!panelGeneral || !panelShortcuts) return;
+
+  panelGeneral.classList.toggle('hidden', isShortcuts);
+  panelShortcuts.classList.toggle('hidden', !isShortcuts);
+
+  if (btnGeneral && btnShortcuts) {
+    btnGeneral.classList.toggle('border-[var(--accent)]', !isShortcuts);
+    btnGeneral.classList.toggle('text-[var(--text-primary)]', !isShortcuts);
+    btnGeneral.classList.toggle('border-transparent', isShortcuts);
+    btnGeneral.classList.toggle('text-[var(--text-secondary)]', isShortcuts);
+
+    btnShortcuts.classList.toggle('border-[var(--accent)]', isShortcuts);
+    btnShortcuts.classList.toggle('text-[var(--text-primary)]', isShortcuts);
+    btnShortcuts.classList.toggle('border-transparent', !isShortcuts);
+    btnShortcuts.classList.toggle('text-[var(--text-secondary)]', !isShortcuts);
+  }
+}
+
+function toggleShortcutsModal() {
+  const modal = document.getElementById('settings-dropdown');
+  const panelShortcuts = document.getElementById('settings-panel-shortcuts');
+  if (!modal) return;
+
+  const isModalClosed = modal.classList.contains('hidden');
+  const isAlreadyOnShortcuts = !isModalClosed && panelShortcuts && !panelShortcuts.classList.contains('hidden');
+
+  if (isAlreadyOnShortcuts) {
+    closeSettingsModal();
+  } else {
+    if (isModalClosed) {
+      toggleSettingsMenu();
+    }
+    switchSettingsTab('shortcuts');
+  }
+}
+
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     closeSettingsModal();
   }
 });
 
-// ==================== SLEEP TIMER (FADE OUT & STOP) ====================
+// ==================== SLEEP TIMER (FADE OUT, END OF TRACK & +15m) ====================
 let sleepTimerInterval = null;
 let sleepRemainingSeconds = 0;
-let originalVolumeBeforeFade = null;
+let sleepTimerMode = 'off'; // 'off' | 'timer' | 'end'
 
-function setSleepTimer(minutes) {
+function updateSleepExtendPill() {
+  const pill = document.getElementById('sleep-extend-pill');
+  const secEl = document.getElementById('sleep-pill-sec');
+  if (!pill) return;
+
+  if (sleepTimerMode === 'timer' && sleepRemainingSeconds > 0 && sleepRemainingSeconds <= 60) {
+    pill.classList.remove('hidden');
+    if (secEl) secEl.textContent = `${sleepRemainingSeconds}s`;
+  } else {
+    pill.classList.add('hidden');
+  }
+}
+
+function setSleepTimer(option) {
   if (sleepTimerInterval) {
     clearInterval(sleepTimerInterval);
     sleepTimerInterval = null;
   }
 
-  if (originalVolumeBeforeFade !== null) {
-    realAudioPlayer.volume = originalVolumeBeforeFade;
-    originalVolumeBeforeFade = null;
-  }
+  // รีเซ็ตระดับเสียงกลับเป็นปกติ
+  sleepFadeMultiplier = 1;
+  applyMasterVolume();
 
   document.querySelectorAll('.sleep-opt-btn').forEach((btn) => {
-    btn.classList.toggle('active', Number(btn.dataset.sleep) === minutes);
+    btn.classList.toggle('active', btn.dataset.sleep === String(option));
   });
 
   const countdownEl = document.getElementById('sleep-timer-countdown');
   const dotEl = document.getElementById('sleep-timer-dot');
 
-  if (minutes <= 0) {
+  // โหมด "หยุดเมื่อจบเพลงนี้"
+  if (option === 'end') {
+    if (!currentTrack) {
+      showToast('กรุณาเปิดเพลงก่อนเลือกโหมด "จบเพลงนี้"');
+      setSleepTimer(0);
+      return;
+    }
+    sleepTimerMode = 'end';
     sleepRemainingSeconds = 0;
-    if (countdownEl) countdownEl.textContent = 'ปิดอยู่';
-    if (dotEl) dotEl.classList.add('hidden');
+    if (countdownEl) countdownEl.textContent = 'เมื่อจบเพลงนี้';
+    if (dotEl) dotEl.classList.remove('hidden');
+    updateSleepExtendPill();
+    showToast('ตั้งเวลาปิดเพลงเมื่อจบเพลงนี้แล้ว');
     return;
   }
 
+  const minutes = Number(option);
+  if (isNaN(minutes) || minutes <= 0) {
+    sleepTimerMode = 'off';
+    sleepRemainingSeconds = 0;
+    if (countdownEl) countdownEl.textContent = 'ปิดอยู่';
+    if (dotEl) dotEl.classList.add('hidden');
+    updateSleepExtendPill();
+    return;
+  }
+
+  sleepTimerMode = 'timer';
   sleepRemainingSeconds = minutes * 60;
   if (dotEl) dotEl.classList.remove('hidden');
   updateSleepCountdownDisplay();
+  updateSleepExtendPill();
 
   sleepTimerInterval = setInterval(() => {
     sleepRemainingSeconds--;
     updateSleepCountdownDisplay();
+    updateSleepExtendPill();
 
-    // ช่วง 15 วินาทีสุดท้าย: ค่อย ๆ เฟดเสียงเพลงเบาลงอย่างนุ่มนวล
+    // ช่วง 15 วินาทีสุดท้าย: เฟดเสียงเบาลงอย่างนุ่มนวลทั้งโหมดเพลงจริงและโหมด Synth
     if (sleepRemainingSeconds <= 15 && sleepRemainingSeconds > 0) {
-      if (originalVolumeBeforeFade === null) {
-        originalVolumeBeforeFade = realAudioPlayer.volume;
-      }
-      const ratio = sleepRemainingSeconds / 15;
-      realAudioPlayer.volume = Math.max(0, originalVolumeBeforeFade * ratio);
+      sleepFadeMultiplier = sleepRemainingSeconds / 15;
+      applyMasterVolume();
     }
 
     // ครบเวลา: หยุดเล่นเพลงและรีเซ็ตเสียงกลับค่าเดิม
@@ -1018,17 +1399,38 @@ function setSleepTimer(minutes) {
       if (isPlaying) {
         togglePlayPause();
       } else {
-        realAudioPlayer.pause();
+        stopAmbientSound();
       }
 
-      if (originalVolumeBeforeFade !== null) {
-        realAudioPlayer.volume = originalVolumeBeforeFade;
-        originalVolumeBeforeFade = null;
-      }
-
+      sleepFadeMultiplier = 1;
+      applyMasterVolume();
       setSleepTimer(0);
+      showToast('ครบเวลา Sleep Timer แล้ว ฝันดีครับ');
     }
   }, 1000);
+}
+
+function extendSleepTimer15() {
+  if (sleepTimerMode === 'end' || sleepTimerMode === 'off') {
+    // ถ้ากดตอนใช้โหมดจบเพลง (หรือยังไม่ตั้งเวลา) ให้เปลี่ยนเป็นตั้งเวลา 15 นาทีแทน
+    setSleepTimer(15);
+    showToast('เปลี่ยนเป็นตั้งเวลาปิดเพลง 15 นาที');
+    return;
+  }
+
+  // เพิ่มเวลาอีก 15 นาทีจากเวลาที่เหลืออยู่
+  sleepRemainingSeconds += 15 * 60;
+  sleepFadeMultiplier = 1;
+  applyMasterVolume();
+
+  // ล้าง active state จากปุ่มตัวเลขตายตัว เพราะเวลาถูกบวกเพิ่มแล้ว
+  document.querySelectorAll('.sleep-opt-btn').forEach((btn) => {
+    btn.classList.remove('active');
+  });
+
+  updateSleepCountdownDisplay();
+  updateSleepExtendPill();
+  showToast('เพิ่มเวลา Sleep Timer อีก 15 นาที');
 }
 
 function updateSleepCountdownDisplay() {
@@ -1039,35 +1441,58 @@ function updateSleepCountdownDisplay() {
   countdownEl.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
-// ==================== KEYBOARD SHORTCUTS (SYNC, SPACE, ARROWS) ====================
+// ==================== KEYBOARD SHORTCUTS (SYNC, SPACE, ARROWS, M, N/P, L, ?) ====================
 let secretKeyBuffer = '';
 
 window.addEventListener('keydown', (e) => {
-  const tag = e.target.tagName;
-  if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return;
+  if (e.defaultPrevented) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
 
-  // 1. Spacebar: เล่น / หยุดเพลงชั่วคราว
+  const tag = e.target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable) return;
+
+  // 1. Spacebar: เล่น / หยุดเพลงชั่วคราว (ไม่แย่งปุ่ม/ลิงก์ที่โฟกัสอยู่)
   if (e.code === 'Space') {
+    if (tag === 'BUTTON' || tag === 'A' || e.target.closest('[role="button"]')) return;
+    if (!currentTrack) return;
     e.preventDefault();
     togglePlayPause();
     return;
   }
 
-  // 2. ลูกศรซ้าย / ขวา: กรอถอยหลัง / เดินหน้าทีละ 5 วินาที
+  // 2. ลูกศรซ้าย / ขวา: กรอถอยหลัง / เดินหน้าทีละ 5 วินาที (รองรับทั้งเพลงจริงและโหมด Synth)
   if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
-    if (!isNaN(realAudioPlayer.duration)) {
+    const totalSec = getEffectiveDuration();
+    if (currentTrack && totalSec > 0) {
       e.preventDefault();
       const step = e.code === 'ArrowRight' ? 5 : -5;
-      const nextTime = Math.min(Math.max(0, realAudioPlayer.currentTime + step), realAudioPlayer.duration);
-      realAudioPlayer.currentTime = nextTime;
+      const isReal = currentTrack.audioUrl && currentTrack.audioUrl.trim() !== "";
+      const curTime = isReal ? realAudioPlayer.currentTime : synthElapsedSeconds;
+      const nextTime = Math.min(Math.max(0, curTime + step), totalSec);
+
+      if (isReal) realAudioPlayer.currentTime = nextTime;
+      else synthElapsedSeconds = nextTime;
+
+      updateSeekUI(nextTime, totalSec);
       updateSyncedLyricsHighlight(nextTime);
+      saveResumeStateNow(nextTime);
     }
     return;
   }
 
-  // 3. พิมพ์รหัสลับ "sync" (รองรับทั้งแป้นอังกฤษและไทย "ผัืแ") เพื่อเปิด/ปิดโหมดจับเวลา
+  // 3. ลูกศรขึ้น / ลง: ปรับเสียงทีละ 5%
+  if (e.code === 'ArrowUp' || e.code === 'ArrowDown') {
+    e.preventDefault();
+    adjustVolumeBy(e.code === 'ArrowUp' ? 5 : -5);
+    return;
+  }
+
   if (e.key.length !== 1) return;
-  secretKeyBuffer = (secretKeyBuffer + e.key.toLowerCase()).slice(-4);
+  const lowerKey = e.key.toLowerCase();
+
+  // อัปเดตบัฟเฟอร์รหัสลับ "sync" / "ผัืแ" ก่อน เพื่อป้องกันตัว 'n' ใน "sync" ไปข้ามเพลง
+  const prevBuffer = secretKeyBuffer;
+  secretKeyBuffer = (secretKeyBuffer + lowerKey).slice(-4);
 
   if (secretKeyBuffer === 'sync' || secretKeyBuffer === 'ผัืแ') {
     secretKeyBuffer = '';
@@ -1088,6 +1513,46 @@ window.addEventListener('keydown', (e) => {
     } else {
       if (isSyncHelperOpen) toggleSyncHelper();
     }
+    return;
+  }
+
+  // ถ้ากำลังพิมพ์รหัสลับ "sy" แล้วตามด้วย "n" ให้ข้ามการทำงานของคีย์ลัด N
+  if (lowerKey === 'n' && prevBuffer.endsWith('sy')) {
+    return;
+  }
+
+  // 4. คีย์ลัดควบคุมห้องฟังเพลง: M, N, P, L, ?
+  if (lowerKey === 'm') {
+    e.preventDefault();
+    toggleMute();
+    return;
+  }
+
+  if (lowerKey === 'n') {
+    if (!currentTrack) return;
+    e.preventDefault();
+    nextTrack(false);
+    return;
+  }
+
+  if (lowerKey === 'p') {
+    if (!currentTrack) return;
+    e.preventDefault();
+    prevTrack();
+    return;
+  }
+
+  if (lowerKey === 'l') {
+    if (!currentTrack) return;
+    e.preventDefault();
+    toggleLyricsPanel();
+    return;
+  }
+
+  if (e.key === '?') {
+    e.preventDefault();
+    toggleShortcutsModal();
+    return;
   }
 });
 
@@ -1113,6 +1578,7 @@ function injectAndSyncVisualizer() {
 function initAmbientParticles() {
   const canvas = document.getElementById('ambient-particles');
   if (!canvas) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const ctx = canvas.getContext('2d');
 
   let width = (canvas.width = window.innerWidth);
@@ -1218,13 +1684,236 @@ function initAmbientParticles() {
   animate();
 }
 
+// ==================== FILTER / QUEUE: SHUFFLE & REPEAT ====================
+let isShuffle = false;
+let repeatMode = 'all'; // 'off' | 'all' | 'one'
+const DEFAULT_TITLE = document.title;
+
+function getFilteredTracks() {
+  const query = (document.getElementById('search-input')?.value || '').trim().toLowerCase();
+  return getValidTracks().filter(track => {
+    const matchesMood =
+      currentMood === 'all' ? true :
+      currentMood === 'Saved' ? savedTrackIds.includes(track.id) :
+      track.mood === currentMood;
+
+    const haystack = [track.title, track.jpTitle, track.artist, track.category, track.mood, track.description]
+      .filter(Boolean).join(' ').toLowerCase();
+    return matchesMood && (!query || haystack.includes(query));
+  });
+}
+
+function getPlaybackList() {
+  const list = getFilteredTracks();
+  return currentTrack && list.some(t => t.id === currentTrack.id) ? list : getValidTracks();
+}
+
+function pickNext(dir, auto) {
+  const list = getPlaybackList();
+  if (!list.length || !currentTrack) return null;
+  if (isShuffle && list.length > 1) {
+    let r;
+    do { r = list[Math.floor(Math.random() * list.length)]; } while (r.id === currentTrack.id);
+    return r;
+  }
+  const idx = list.findIndex(t => t.id === currentTrack.id);
+  const n = idx + dir;
+  if (auto && repeatMode === 'off' && n >= list.length) return null;
+  return list[(n + list.length) % list.length];
+}
+
+function playQueueTrack(t, userInitiated = false) {
+  if (currentTrack && t.id === currentTrack.id) {
+    if (userInitiated && sleepTimerMode === 'end') {
+      setSleepTimer(0);
+    }
+    realAudioPlayer.currentTime = 0;
+    synthElapsedSeconds = 0;
+    isPlaying = true;
+    startAmbientSound(t);
+    updatePlayerUI();
+    refreshPlayIcons();
+    saveResumeStateNow(0);
+    return;
+  }
+  playTrackById(t.id, userInitiated);
+}
+
+function handleTrackEnded() {
+  // ถ้าตั้ง Sleep Timer แบบ "หยุดเมื่อจบเพลงนี้" ให้หยุดเล่นและปิดตัวตั้งเวลาทันที
+  if (sleepTimerMode === 'end') {
+    isPlaying = false;
+    stopAmbientSound();
+    realAudioPlayer.currentTime = 0;
+    synthElapsedSeconds = 0;
+    updateSeekUI(0, getEffectiveDuration());
+    updatePlayPauseButtonUI();
+    refreshPlayIcons();
+    setSleepTimer(0);
+    saveResumeStateNow(0);
+    showToast('จบเพลงแล้ว ปิดการเล่นตามที่ตั้งเวลาไว้');
+    return;
+  }
+
+  if (repeatMode === 'one') {
+    realAudioPlayer.currentTime = 0;
+    synthElapsedSeconds = 0;
+    if (currentTrack && currentTrack.audioUrl && currentTrack.audioUrl.trim() !== "") {
+      realAudioPlayer.play().catch(() => {});
+    }
+    return;
+  }
+  nextTrack(true);
+}
+
+function toggleShuffle() {
+  isShuffle = !isShuffle;
+  updateQueueButtons();
+}
+
+function cycleRepeat() {
+  repeatMode = repeatMode === 'all' ? 'one' : repeatMode === 'one' ? 'off' : 'all';
+  updateQueueButtons();
+}
+
+function updateQueueButtons() {
+  const s = document.getElementById('btn-shuffle');
+  const r = document.getElementById('btn-repeat');
+  const b = document.getElementById('repeat-badge');
+  if (s) {
+    s.classList.toggle('lyrics-btn-active', isShuffle);
+    s.setAttribute('aria-pressed', String(isShuffle));
+    s.title = isShuffle ? 'สุ่มลำดับ: เปิด' : 'สุ่มลำดับ: ปิด';
+  }
+  if (r) {
+    r.classList.toggle('lyrics-btn-active', repeatMode !== 'off');
+    r.setAttribute('aria-pressed', String(repeatMode !== 'off'));
+    r.title = repeatMode === 'one' ? 'เล่นซ้ำเพลงเดียว' : repeatMode === 'all' ? 'เล่นวนทั้งรายการ' : 'ไม่เล่นซ้ำ';
+  }
+  if (b) b.classList.toggle('hidden', repeatMode !== 'one');
+}
+
+// ==================== UI FEEDBACK: PLAY ICONS, TOAST, MEDIA SESSION ====================
+const ICON_PLAY_SM = '<svg class="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+const ICON_PAUSE_SM = '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+
+function refreshPlayIcons() {
+  document.querySelectorAll('[data-play-icon]').forEach(el => {
+    const on = currentTrack && String(currentTrack.id) === el.dataset.playIcon && isPlaying;
+    el.innerHTML = on ? ICON_PAUSE_SM : ICON_PLAY_SM;
+  });
+  injectAndSyncVisualizer();
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.playbackState = !currentTrack ? 'none' : (isPlaying ? 'playing' : 'paused');
+  }
+}
+
+function showToast(msg) {
+  let el = document.getElementById('ena-toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'ena-toast';
+    el.className = 'ena-toast';
+    el.setAttribute('role', 'status');
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+realAudioPlayer.addEventListener('error', () => {
+  if (!currentTrack || !currentTrack.audioUrl) return;
+  isPlaying = false;
+  updatePlayPauseButtonUI();
+  refreshPlayIcons();
+  showToast('ไม่พบไฟล์เสียง: ' + currentTrack.audioUrl);
+});
+
+function updateMediaSession() {
+  document.title = currentTrack ? `${currentTrack.title} · Ena.` : DEFAULT_TITLE;
+  if (!('mediaSession' in navigator)) return;
+  if (!currentTrack) {
+    navigator.mediaSession.metadata = null;
+    return;
+  }
+  const hasCover = currentTrack.coverUrl && currentTrack.coverUrl.trim() !== '';
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: currentTrack.title,
+      artist: currentTrack.artist,
+      album: 'Ena. Listening Room',
+      artwork: hasCover ? [{ src: new URL(currentTrack.coverUrl, location.href).href }] : []
+    });
+  } catch (e) {}
+}
+
+function initMediaSession() {
+  if (!('mediaSession' in navigator)) return;
+  const set = (action, fn) => { try { navigator.mediaSession.setActionHandler(action, fn); } catch (e) {} };
+  set('play', () => { if (currentTrack && !isPlaying) togglePlayPause(); });
+  set('pause', () => { if (currentTrack && isPlaying) togglePlayPause(); });
+  set('previoustrack', () => prevTrack());
+  set('nexttrack', () => nextTrack());
+  set('seekbackward', () => {
+    const isReal = currentTrack && currentTrack.audioUrl && currentTrack.audioUrl.trim() !== "";
+    seekToSeconds((isReal ? realAudioPlayer.currentTime : synthElapsedSeconds) - 10);
+  });
+  set('seekforward', () => {
+    const isReal = currentTrack && currentTrack.audioUrl && currentTrack.audioUrl.trim() !== "";
+    seekToSeconds((isReal ? realAudioPlayer.currentTime : synthElapsedSeconds) + 10);
+  });
+  set('seekto', d => { if (d && d.seekTime != null) seekToSeconds(d.seekTime); });
+}
+
+// ==================== SETTINGS MODAL: FOCUS MANAGEMENT ====================
+let lastFocusBeforeModal = null;
+const _openSettingsBase = toggleSettingsMenu;
+const _closeSettingsBase = closeSettingsModal;
+
+toggleSettingsMenu = function (e) {
+  const modal = document.getElementById('settings-dropdown');
+  const wasHidden = modal && modal.classList.contains('hidden');
+  if (wasHidden) {
+    lastFocusBeforeModal = document.activeElement;
+    switchSettingsTab('general');
+  }
+  _openSettingsBase(e);
+  if (wasHidden) {
+    const closeBtn = modal.querySelector('button[aria-label="ปิดหน้าต่างตั้งค่า"]');
+    if (closeBtn) closeBtn.focus();
+  }
+};
+
+closeSettingsModal = function () {
+  const modal = document.getElementById('settings-dropdown');
+  const wasOpen = modal && !modal.classList.contains('hidden');
+  _closeSettingsBase();
+  if (wasOpen && lastFocusBeforeModal && lastFocusBeforeModal.focus) lastFocusBeforeModal.focus();
+};
+
+window.addEventListener('keydown', (e) => {
+  if (e.key !== 'Tab') return;
+  const modal = document.getElementById('settings-dropdown');
+  if (!modal || modal.classList.contains('hidden')) return;
+  const f = [...modal.querySelectorAll('button')];
+  if (!f.length) return;
+  const first = f[0], last = f[f.length - 1];
+  if (!modal.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+  else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+});
+
 // ==================== INITIALIZE ====================
 window.addEventListener('DOMContentLoaded', () => {
   if (localStorage.getItem('ena_theme') === 'light') {
     document.body.classList.add('light-theme');
   }
   updateSettingsThemeLabel();
-  updateVolumeUI(30);
+  const volSlider = document.getElementById('volume-slider');
+  if (volSlider) volSlider.value = Math.round(currentVolume * 100);
+  updateVolumeUI(Math.round(currentVolume * 100));
   initDraggableAndResizablePlayer();
   initDraggableSettingsModal();
   initRandomSelections();
@@ -1232,5 +1921,9 @@ window.addEventListener('DOMContentLoaded', () => {
   renderLibraryTracks();
   initAmbientParticles();
   injectAndSyncVisualizer();
-  setInterval(injectAndSyncVisualizer, 350);
+  ['play', 'pause', 'ended', 'emptied'].forEach(ev => realAudioPlayer.addEventListener(ev, injectAndSyncVisualizer));
+  initMediaSession();
+  updateQueueButtons();
+  restoreResumeState();
+  if (location.hash) applyHash();
 });

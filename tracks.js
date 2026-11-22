@@ -5,7 +5,6 @@
 const TRACKS = [
   {
     id: 1,
-    number: "01 / 03",
     category: "J-POP / Late Night",
     mood: "Late Night",
     title: "Engeki",
@@ -13,7 +12,6 @@ const TRACKS = [
     artist: "Nightcord at 25:00",
     description: "ใช้ชีวิตตามบทบาทที่ใครบางคนมอบให้ จนหลงลืมไปว่าตัวตนที่แท้จริงของเราคือใคร",
     duration: "05:06",
-    featured: true,
     coverUrl: "images/engeki.png",
     audioUrl: "music/Engeki.mp3",
     chords: [[261.63, 329.63, 392.00, 493.88], [220.00, 261.63, 329.63, 392.00]],
@@ -520,7 +518,6 @@ Ah` }
 },
   {
     id: 2,
-    number: "02 / 03",
     category: "J-ROCK / Warmth",
     mood: "Warmth",
     title: "Itsuka",
@@ -528,7 +525,6 @@ Ah` }
     artist: "Arekun",
     description: "แม้วันนี้จะเต็มไปด้วยความทรงจำที่เจ็บปวด และวันพรุ่งนี้อาจไม่เป็นอย่างที่หวัง แต่ขอเพียงมีชีวิตต่อไป เพื่อพบกับวันที่เราจะยิ้มให้กับเรื่องราวเหล่านั้นได้อีกครั้ง",
     duration: "04:19",
-    featured: false,
     coverUrl: "images/Itsuka.jpg",
     audioUrl: "music/Itsuka.mp3",
     chords: [[174.61, 220.00, 261.63, 329.63], [196.00, 246.94, 293.66, 349.23]],
@@ -765,7 +761,6 @@ Ima o ikiyou iki o tsunagou
 },
   {
     id: 3,
-    number: "03 / 03",
     category: "ALTERNATIVE ROCK / WARMTH",
     mood: "Warmth",
     title: "more than words",
@@ -773,7 +768,6 @@ Ima o ikiyou iki o tsunagou
     artist: "Hitsujibungaku ",
     description: "บางครั้งคำพูดก็ไม่อาจถ่ายทอดทุกความรู้สึกได้หมด แต่ถึงอย่างนั้น เราก็ยังพยายามรักตัวเอง และก้าวผ่านค่ำคืนที่ยากลำบากไปให้ได้",
     duration: "04:58",
-    featured: false,
     coverUrl: "images/mtw1.jpg",
     audioUrl: "music/mtw.mp3",
     chords: [[293.66, 349.23, 440.00, 523.25], [196.00, 246.94, 293.66, 392.00]],
@@ -1068,7 +1062,6 @@ Give you more than words` }
   },
   {
     id: 4,
-    number: "04 / 06",
     category: "J-POP / RAIN",
     mood: "Rainy Window",
     title: "Blooming in the Mud",
@@ -1076,7 +1069,6 @@ Give you more than words` }
     artist: "Wolpis Carter",
     description: "แม้ชีวิตจะเต็มไปด้วยโคลนตมและเส้นทางที่มืดมน แต่เรายังคงมีเหตุผลที่จะมีชีวิตอยู่ และผลิบานในแบบของตัวเอง",
     duration: "04:50",
-    featured: true,
     coverUrl: "images/DNI.jpg",
     audioUrl: "music/DNI.mp3",
     chords: [[246.94, 293.66, 369.99, 440.00], [164.81, 246.94, 329.63, 392.00]],
@@ -1324,7 +1316,6 @@ Sono sen ga sa kasanaru chizu kimi o terasu tame ni saku hana sa
 },
   {
     id: 5,
-    number: "05 / 06",
     category: "J-ROCK / Late Night",
     mood: "Late Night",
     title: "Reason for existence",
@@ -1332,7 +1323,6 @@ Sono sen ga sa kasanaru chizu kimi o terasu tame ni saku hana sa
     artist: "Tsukuyomi",
     description: "แม้หัวใจจะเต็มไปด้วยรอยร้าว และค่ำคืนจะมืดมนเพียงใด ขอให้บทเพลงนี้เป็นแสงเล็ก ๆ ที่ช่วยยืนยันว่าเรายังมีเหตุผลที่จะมีชีวิตอยู่ต่อ",
     duration: "04:04",
-    featured: false,
     coverUrl: "images/rfe.jpg",
     audioUrl: "music/rfe.mp3",
     chords: [[220.00, 277.18, 329.63, 415.30], [146.83, 220.00, 293.66, 369.99]],
@@ -1632,7 +1622,7 @@ Boku wa yowai mama de ii
   { time: 171.8, text: `(จงฉีกกระชากและกวาดล้างความเศร้าแห่งราตรีไปเสีย ให้เป็นสิ่งยึดเหนี่ยวในการมีชีวิตอยู่)
 Yoru no ai o saite naide ike ikiru yosuga
 夜の哀を裂いて薙いでいけ 生きるよすが` },
-  { time: 171.8, text: `(ทั้งความผิดพลาด คำตอบ วันนี้ และอนาคต จงกลายเป็นบทกวี)
+  { time: 171.9, text: `(ทั้งความผิดพลาด คำตอบ วันนี้ และอนาคต จงกลายเป็นบทกวี)
 Machigai mo kotae mo kyou mo mirai mo uta ni nare
 間違いも答えも今日も未来も詩になれ` },
   { time: 175.9, text: `(ฉันไม่เข้าใจเลย)
@@ -1662,7 +1652,7 @@ Minikui hodo ni utsukushii mono o
   { time: 204.7, text: `(ช่วยเติมเต็มหัวใจที่แหว่งเว้าของฉันทีเถอะ)
 Kaketa kokoro o umete kure yo
 欠けた心を埋めてくれよ` },
-  { time: 204.7, text: `(ด้วยบทเพลงแบบไหน ด้วยถ้อยคำแบบใด...)
+  { time: 204.8, text: `(ด้วยบทเพลงแบบไหน ด้วยถ้อยคำแบบใด...)
 Donna uta de donna kotoba de
 どんな歌で どんな言葉で` },
   { time: 210.6, text: `(ฉันจะกลายเป็นสิ่งยึดเหนี่ยวในค่ำคืนอันมืดมิดได้อย่างไรกันนะ?)
@@ -1675,7 +1665,6 @@ Kamisama ni negau no wa tada hitotsu dake
 },
   {
     id: 6,
-    number: "06 / 06",
     category: "J-POP / Soft Waves",
     mood: "Soft Waves",
     title: "Bubbles",
@@ -1683,7 +1672,6 @@ Kamisama ni negau no wa tada hitotsu dake
     artist: "asmi",
     description: "บางความรู้สึกใสจนมองเห็น แต่กลับเปราะบางเกินกว่าจะเอื้อมมือไปสัมผัส",
     duration: "03:35",
-    featured: true,
     coverUrl: "images/bubbles.png",
     audioUrl: "music/Bubbles_asmi.mp3",
     chords: [[196.00, 246.94, 293.66, 369.99], [164.81, 196.00, 246.94, 293.66]],
@@ -1994,7 +1982,6 @@ Dakedo ima nara
   },
   {
     id: 7,
-    number: "07 / 07",
     category: "J-POP / INDIE",
     mood: "Late Night",
     title: "Irony",
@@ -2002,7 +1989,6 @@ Dakedo ima nara
     artist: "Majiko",
     description: "บางครั้งก็แค่อยากหยุดพักจากชีวิตที่ยาวไกล เหนื่อยกับการพยายาม เหนื่อยกับความหวังที่เอื้อมไม่ถึง และเหนื่อยกับการต้องทำเหมือนว่าทุกอย่างยังไหว",
     duration: "04:06",
-    featured: false,
     coverUrl: "images/irony.jpg",
     audioUrl: "music/irony.mp3",
     chords: [[261.63, 329.63, 392.00, 493.88], [220.00, 261.63, 329.63, 392.00]],
