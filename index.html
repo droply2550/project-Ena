@@ -62,9 +62,9 @@
           id="btn-settings-toggle"
           onclick="toggleSettingsMenu(event)" 
           title="ตั้งค่าห้องฟังเพลง"
-          aria-label="Room Settings"
+          aria-label="ตั้งค่าห้องฟังเพลง"
           class="relative w-9 h-9 rounded-full border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors cursor-pointer">
-          <!-- จุดไฟแจ้งเตือนเมื่อเปิด Sleep Timer ค้างไว้ -->
+          <!-- จุดไฟแจ้งเตือนเมื่อเปิด Sleep Timer หรือ Ambient Mixer ค้างไว้ -->
           <span id="sleep-timer-dot" class="hidden absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[var(--accent)] ring-2 ring-[var(--bg)] animate-pulse"></span>
           <!-- Icon Gear -->
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
@@ -123,7 +123,13 @@
 
         <!-- Right Column (Custom Hero Atmospheric Card - Random Track) -->
         <div class="lg:col-span-6">
-          <div onclick="playRecommendedTrack()" class="hero-card-visual relative rounded-2xl p-6 sm:p-8 h-[360px] sm:h-[420px] flex flex-col justify-between overflow-hidden cursor-pointer group shadow-2xl shadow-[#060B14]/40">
+          <div 
+            role="button"
+            tabindex="0"
+            aria-label="เล่นเพลงแนะนำประจำคืนนี้"
+            onclick="playRecommendedTrack()" 
+            onkeydown="handleCardKeydown(event, playRecommendedTrack)"
+            class="hero-card-visual relative rounded-2xl p-6 sm:p-8 h-[360px] sm:h-[420px] flex flex-col justify-between overflow-hidden cursor-pointer group shadow-2xl shadow-[#060B14]/40">
             
             <!-- 1. รูปภาพพื้นหลัง -->
             <img 
@@ -143,7 +149,7 @@
             </div>
 
             <!-- 3. ปุ่มกดเล่นตรงกลาง (แสดงเมื่อเอาเมาส์ชี้) -->
-            <div class="relative z-10 my-auto flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0">
+            <div class="relative z-10 my-auto flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0">
               <div class="w-14 h-14 rounded-full glass-pill flex items-center justify-center text-[#F4F7FC] mb-2">
                 <svg class="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
               </div>
@@ -347,7 +353,12 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <!-- Mood 1: Late Night -->
-          <div onclick="jumpToMood('Late Night')" class="editorial-card rounded-2xl p-6 space-y-2.5 cursor-pointer group">
+          <div 
+            role="button" 
+            tabindex="0" 
+            onclick="jumpToMood('Late Night')" 
+            onkeydown="handleCardKeydown(event, () => jumpToMood('Late Night'))"
+            class="editorial-card rounded-2xl p-6 space-y-2.5 cursor-pointer group">
             <div class="flex items-center justify-between">
               <span class="text-xs font-en tracking-[0.15em] uppercase text-[var(--accent)] font-semibold">LATE NIGHT · ดึกสงัด</span>
               <span class="text-xs text-[var(--text-secondary)] group-hover:translate-x-1 transition-transform">→</span>
@@ -361,7 +372,12 @@
           </div>
 
           <!-- Mood 2: Warmth -->
-          <div onclick="jumpToMood('Warmth')" class="editorial-card rounded-2xl p-6 space-y-2.5 cursor-pointer group">
+          <div 
+            role="button" 
+            tabindex="0" 
+            onclick="jumpToMood('Warmth')" 
+            onkeydown="handleCardKeydown(event, () => jumpToMood('Warmth'))"
+            class="editorial-card rounded-2xl p-6 space-y-2.5 cursor-pointer group">
             <div class="flex items-center justify-between">
               <span class="text-xs font-en tracking-[0.15em] uppercase text-[var(--accent)] font-semibold">WARMTH · แสงอุ่น</span>
               <span class="text-xs text-[var(--text-secondary)] group-hover:translate-x-1 transition-transform">→</span>
@@ -375,7 +391,12 @@
           </div>
 
           <!-- Mood 3: Rainy Window -->
-          <div onclick="jumpToMood('Rainy Window')" class="editorial-card rounded-2xl p-6 space-y-2.5 cursor-pointer group">
+          <div 
+            role="button" 
+            tabindex="0" 
+            onclick="jumpToMood('Rainy Window')" 
+            onkeydown="handleCardKeydown(event, () => jumpToMood('Rainy Window'))"
+            class="editorial-card rounded-2xl p-6 space-y-2.5 cursor-pointer group">
             <div class="flex items-center justify-between">
               <span class="text-xs font-en tracking-[0.15em] uppercase text-[var(--accent)] font-semibold">RAINY WINDOW · คืนฝนพรำ</span>
               <span class="text-xs text-[var(--text-secondary)] group-hover:translate-x-1 transition-transform">→</span>
@@ -389,7 +410,12 @@
           </div>
 
           <!-- Mood 4: Soft Waves -->
-          <div onclick="jumpToMood('Soft Waves')" class="editorial-card rounded-2xl p-6 space-y-2.5 cursor-pointer group">
+          <div 
+            role="button" 
+            tabindex="0" 
+            onclick="jumpToMood('Soft Waves')" 
+            onkeydown="handleCardKeydown(event, () => jumpToMood('Soft Waves'))"
+            class="editorial-card rounded-2xl p-6 space-y-2.5 cursor-pointer group">
             <div class="flex items-center justify-between">
               <span class="text-xs font-en tracking-[0.15em] uppercase text-[var(--accent)] font-semibold">SOFT WAVES · ริมทะเล</span>
               <span class="text-xs text-[var(--text-secondary)] group-hover:translate-x-1 transition-transform">→</span>
@@ -404,17 +430,11 @@
         </div>
       </div>
 
-      
-
-          
-
-        
-
       <!-- 03 / COPYRIGHT & CREDITS -->
       <div class="editorial-card rounded-2xl p-8 sm:p-10 space-y-5">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div class="space-y-1">
-            <span class="text-[11px] font-en tracking-[0.18em] uppercase text-[var(--accent)]">04 / COPYRIGHT & CREDITS</span>
+            <span class="text-[11px] font-en tracking-[0.18em] uppercase text-[var(--accent)]">03 / COPYRIGHT & CREDITS</span>
             <h2 class="text-xl sm:text-2xl font-bold tracking-tight">ลิขสิทธิ์และเครดิตผลงาน</h2>
           </div>
           <span class="text-[11px] font-en tracking-[0.14em] px-3 py-1 rounded-full border border-[var(--border-subtle)] text-[var(--text-secondary)] w-fit">
@@ -576,7 +596,7 @@
   <!-- ==================== RIGHT-HAND LYRICS DRAWER (ด้านขวามือของเว็บ) ==================== -->
   <aside 
     id="lyrics-right-drawer" 
-    aria-label="Lyrics Panel"
+    aria-label="หน้าต่างเนื้อเพลง"
     class="fixed top-20 right-0 bottom-0 z-40 w-full sm:w-[360px] md:w-[400px] glass-drawer border-l border-[var(--border-subtle)] p-6 sm:p-8 flex flex-col justify-between transition-transform duration-500 ease-out translate-x-full shadow-2xl">
     
     <!-- Header -->
@@ -599,7 +619,7 @@
           <button 
             onclick="toggleLyricsPanel()" 
             title="ปิดหน้าต่างเนื้อเพลง"
-            aria-label="Close Lyrics"
+            aria-label="ปิดหน้าต่างเนื้อเพลง"
             class="w-8 h-8 rounded-full border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors cursor-pointer">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
@@ -647,6 +667,19 @@
 
   </aside>
 
+  <!-- ==================== SLEEP TIMER EXTEND BADGE (โผล่เมื่อเหลือ ≤ 60 วินาที) ==================== -->
+  <div 
+    id="sleep-extend-pill" 
+    class="hidden fixed bottom-44 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-2 rounded-full glass-player border border-[var(--accent)] shadow-xl text-xs">
+    <span class="w-2 h-2 rounded-full bg-[var(--accent)] animate-ping"></span>
+    <span class="text-[var(--text-primary)] font-light">ใกล้หมดเวลาตั้งปิดเพลง (<span id="sleep-pill-sec" class="font-en font-semibold text-[var(--accent)]">60s</span>)</span>
+    <button 
+      onclick="extendSleepTimer15()" 
+      class="px-3 py-1 rounded-full btn-primary text-[11px] font-medium cursor-pointer">
+      +15 นาที
+    </button>
+  </div>
+
   <!-- ==================== DRAGGABLE & RESIZABLE FLOATING MINI-PLAYER ==================== -->
   <div id="mini-player" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-[740px] glass-player rounded-2xl p-4 shadow-2xl player-hidden select-none">
     
@@ -668,7 +701,7 @@
           RESET
         </button>
         <!-- ปุ่มย่อ / ขยายโหมดกะทัดรัด -->
-        <button id="btn-compact-toggle" onclick="toggleCompactPlayer()" title="ย่อ / ขยายตัวควบคุม" class="p-1 rounded text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 transition-colors cursor-pointer">
+        <button id="btn-compact-toggle" onclick="toggleCompactPlayer()" title="ย่อ / ขยายตัวควบคุม" aria-label="ย่อหรือขยายตัวเล่นเพลง" class="p-1 rounded text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 transition-colors cursor-pointer">
           <svg id="icon-minimize" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
           </svg>
@@ -689,7 +722,7 @@
         max="100" 
         value="0" 
         oninput="seekTrack(this.value)"
-        aria-label="Seek Track"
+        aria-label="แถบเลื่อนเวลาเพลง"
         class="ena-slider flex-1 cursor-pointer"
       />
       <span id="total-duration" class="text-[10px] font-en text-[var(--text-secondary)] w-8 tabular-nums">00:00</span>
@@ -718,37 +751,49 @@
 
       <!-- Center: Playback Controls -->
       <div class="flex items-center gap-1 sm:gap-2.5 shrink-0">
-        <button id="btn-shuffle" onclick="toggleShuffle()" aria-label="Shuffle" aria-pressed="false" title="สุ่มลำดับ: ปิด" class="queue-btn hidden sm:inline-flex p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer">
+        <button id="btn-shuffle" onclick="toggleShuffle()" aria-label="สุ่มลำดับเพลง" aria-pressed="false" title="สุ่มลำดับ: ปิด" class="queue-btn hidden sm:inline-flex p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
         </button>
 
-        <button onclick="prevTrack()" aria-label="Previous" class="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer">
+        <button onclick="prevTrack()" aria-label="เพลงก่อนหน้า" title="เพลงก่อนหน้า (P)" class="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer">
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
         </button>
 
-        <button id="player-play-btn" onclick="togglePlayPause()" aria-label="Play or Pause" class="w-10 h-10 rounded-full btn-primary flex items-center justify-center cursor-pointer shadow-md">
+        <button id="player-play-btn" onclick="togglePlayPause()" aria-label="เล่นหรือหยุดเพลง" title="เล่น / หยุด (Space)" class="w-10 h-10 rounded-full btn-primary flex items-center justify-center cursor-pointer shadow-md">
           <svg id="icon-play" class="w-4 h-4 ml-0.5 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
           <svg id="icon-pause" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
         </button>
 
-        <button onclick="nextTrack()" aria-label="Next" class="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer">
+        <button onclick="nextTrack()" aria-label="เพลงถัดไป" title="เพลงถัดไป (N)" class="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer">
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
         </button>
-        <button id="btn-repeat" onclick="cycleRepeat()" aria-label="Repeat" aria-pressed="true" title="เล่นวนทั้งรายการ" class="queue-btn hidden sm:inline-flex relative p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer lyrics-btn-active">
+        <button id="btn-repeat" onclick="cycleRepeat()" aria-label="เล่นวนซ้ำ" aria-pressed="true" title="เล่นวนทั้งรายการ" class="queue-btn hidden sm:inline-flex relative p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer lyrics-btn-active">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m17 2 4 4-4 4M3 11v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 13v1a4 4 0 0 1-4 4H3"/></svg>
           <span id="repeat-badge" class="hidden absolute -top-0.5 -right-0.5 text-[8px] leading-none font-en font-bold text-[var(--accent)]">1</span>
         </button>
       </div>
 
-      <!-- Right: Lyrics Sheet Icon, Volume Control & Close -->
-      <div class="flex items-center justify-end gap-2 sm:gap-3 flex-1 shrink-0">
+      <!-- Right: Focus Mode, Lyrics Sheet Icon, Volume Control & Close -->
+      <div class="flex items-center justify-end gap-1.5 sm:gap-2.5 flex-1 shrink-0">
         
+        <!-- Focus / Ambient Screen Mode Button -->
+        <button 
+          id="btn-focus-toggle" 
+          onclick="toggleFocusMode()" 
+          title="โหมดจดจ่อเต็มจอ (F)"
+          aria-label="เปิดหรือปิดโหมดจดจ่อเต็มจอ"
+          class="p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 transition-all cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4"/>
+          </svg>
+        </button>
+
         <!-- Lyrics Sheet Icon Button -->
         <button 
           id="btn-lyrics-toggle" 
           onclick="toggleLyricsPanel()" 
-          title="ดูเนื้อเพลง"
-          aria-label="Toggle Lyrics Drawer"
+          title="ดูเนื้อเพลง (L)"
+          aria-label="เปิดหรือปิดหน้าต่างเนื้อเพลง"
           class="p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 transition-all cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h12M4 14h9"></path>
@@ -756,9 +801,9 @@
           </svg>
         </button>
 
-        <!-- Volume Control (ซ่อนอัตโนมัติถ้าย่อกล่องให้แคบมาก) -->
+        <!-- Volume Control -->
         <div id="player-volume-group" class="hidden sm:flex items-center gap-2">
-          <button onclick="toggleMute()" title="ปิด/เปิดเสียง" aria-label="Mute or Unmute" class="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer">
+          <button onclick="toggleMute()" title="ปิด/เปิดเสียง (M)" aria-label="ปิดหรือเปิดเสียง" class="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer">
             <svg id="icon-vol-on" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
               <path stroke-linecap="round" d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
@@ -778,13 +823,13 @@
             max="100" 
             value="30" 
             oninput="changeVolume(this.value)"
-            aria-label="Volume"
+            aria-label="ระดับเสียง"
             class="ena-slider w-20 cursor-pointer"
           />
         </div>
 
         <!-- Close Player -->
-        <button onclick="closePlayer()" aria-label="Close Player" class="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer">
+        <button onclick="closePlayer()" title="ปิดตัวเล่นเพลง" aria-label="ปิดตัวเล่นเพลง" class="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
@@ -800,6 +845,182 @@
 
   </div>
 
+  <!-- ==================== FOCUS / AMBIENT SCREEN MODE OVERLAY ==================== -->
+  <div 
+    id="focus-screen-overlay" 
+    role="dialog" aria-modal="true"
+    aria-label="โหมดจดจ่อเต็มจอ"
+    class="hidden fixed inset-0 z-[55] flex flex-col justify-between p-6 sm:p-10 lg:px-16 transition-opacity duration-500">
+    
+    <!-- แถบด้านบน: สถานะห้อง + ปุ่มตั้งค่า + ปุ่มออกจากโหมดเต็มจอ -->
+    <div class="relative z-10 flex items-center justify-between">
+      <div class="flex items-center gap-2.5 text-[11px] font-en tracking-[0.2em] uppercase text-[var(--text-secondary)]">
+        <span class="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse"></span>
+        <span>ENA · FOCUS ROOM</span>
+      </div>
+
+      <div class="flex items-center gap-2.5">
+        <button 
+          onclick="toggleSettingsMenu(event)" 
+          title="ตั้งค่าและเสียงบรรยากาศ"
+          aria-label="ตั้งค่าและเสียงบรรยากาศ"
+          class="w-9 h-9 rounded-full border border-[var(--border-subtle)] xo-bg-surface-elevated-40 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+
+        <button 
+          onclick="toggleFocusMode(false)" 
+          title="ออกจากโหมดจดจ่อ (F หรือ Esc)"
+          aria-label="ออกจากโหมดจดจ่อเต็มจอ"
+          class="px-4 py-2 rounded-full border border-[var(--border-subtle)] xo-bg-surface-elevated-40 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] inline-flex items-center gap-2 transition-colors cursor-pointer">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 4v4H4M16 4v4h4M8 20v-4H4M16 20v-4h4"/>
+          </svg>
+          <span>ออกจากโหมดเต็มจอ</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- พื้นที่กลาง: ปกเพลงขนาดใหญ่ + แผงควบคุมครบชุด + เนื้อเพลง -->
+    <div id="focus-main-grid" class="relative z-10 max-w-5xl w-full mx-auto my-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center py-4 overflow-hidden">
+      
+      <!-- ฝั่งซ้าย (หรือตรงกลางเมื่อซ่อนเนื้อเพลง): ภาพปก + ชื่อเพลง + ปุ่มควบคุมครบชุด -->
+      <div id="focus-left-col" class="lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-left space-y-5 transition-all duration-300">
+        <div id="focus-artwork" class="focus-art-glow w-48 h-48 sm:w-60 sm:h-60 rounded-3xl border border-white/15 bg-gradient-to-br from-[#1E4168] to-[#0B1220] flex flex-col items-center justify-center p-6 relative overflow-hidden shadow-2xl">
+          <span id="focus-jp-fallback" class="font-jp text-lg text-[#F4F7FC]/75 tracking-widest text-center">静かな夜</span>
+        </div>
+
+        <div class="space-y-1.5 w-full">
+          <span id="focus-mood-badge" class="inline-block text-[10px] font-en uppercase tracking-[0.2em] px-2.5 py-0.5 rounded-full xo-bg-accent-15 text-[var(--accent)]">
+            LATE NIGHT
+          </span>
+          <h2 id="focus-title" class="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text-primary)] truncate">
+            Engeki
+          </h2>
+          <p id="focus-artist" class="text-sm text-[var(--text-secondary)]">
+            Nightcord at 25:00 · 演劇
+          </p>
+        </div>
+
+        <!-- แถบกรอเวลาในโหมด Focus -->
+        <div class="w-full max-w-sm space-y-1.5">
+          <input 
+            type="range" 
+            id="focus-seek-slider" 
+            min="0" max="100" value="0" 
+            oninput="seekTrack(this.value)"
+            aria-label="แถบเลื่อนเวลาเพลงในโหมดเต็มจอ"
+            class="ena-slider w-full cursor-pointer"
+          />
+          <div class="flex justify-between text-[11px] font-en text-[var(--text-secondary)] tabular-nums">
+            <span id="focus-current-time">00:00</span>
+            <span id="focus-total-duration">00:00</span>
+          </div>
+        </div>
+
+        <!-- แถวปุ่มควบคุมหลัก (Shuffle / Prev / Play-Pause / Next / Repeat) -->
+        <div class="flex items-center gap-2.5 sm:gap-3.5 pt-1">
+          <button 
+            id="focus-btn-shuffle" 
+            onclick="toggleShuffle()" 
+            aria-label="สุ่มลำดับเพลง" 
+            aria-pressed="false" 
+            title="สุ่มลำดับ: ปิด" 
+            class="queue-btn p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+          </button>
+
+          <button onclick="prevTrack()" aria-label="เพลงก่อนหน้า" title="เพลงก่อนหน้า (P)" class="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+          </button>
+
+          <button onclick="togglePlayPause()" aria-label="เล่นหรือหยุดเพลง" title="เล่น / หยุด (Space)" class="w-12 h-12 rounded-full btn-primary flex items-center justify-center cursor-pointer shadow-lg">
+            <svg id="focus-icon-play" class="w-5 h-5 ml-0.5 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <svg id="focus-icon-pause" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+          </button>
+
+          <button onclick="nextTrack()" aria-label="เพลงถัดไป" title="เพลงถัดไป (N)" class="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+          </button>
+
+          <button 
+            id="focus-btn-repeat" 
+            onclick="cycleRepeat()" 
+            aria-label="เล่นวนซ้ำ" 
+            aria-pressed="true" 
+            title="เล่นวนทั้งรายการ" 
+            class="queue-btn relative p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer lyrics-btn-active">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m17 2 4 4-4 4M3 11v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 13v1a4 4 0 0 1-4 4H3"/></svg>
+            <span id="focus-repeat-badge" class="hidden absolute -top-0.5 -right-0.5 text-[8px] leading-none font-en font-bold text-[var(--accent)]">1</span>
+          </button>
+        </div>
+
+        <!-- แถวเครื่องมือเสริม (ซ่อน-แสดงเนื้อเพลง + Mute + แถบปรับระดับเสียง) -->
+        <div class="flex items-center gap-3 pt-1">
+          <button 
+            id="focus-btn-lyrics-toggle" 
+            onclick="toggleFocusLyrics()" 
+            title="ซ่อน / แสดงเนื้อเพลง (L)"
+            aria-label="ซ่อนหรือแสดงเนื้อเพลงในโหมดเต็มจอ"
+            aria-pressed="true"
+            class="p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 transition-all cursor-pointer lyrics-btn-active">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h12M4 14h9"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm2-2v-6l3-1"></path>
+            </svg>
+          </button>
+
+          <div class="h-4 w-[1px] bg-[var(--border-subtle)]"></div>
+
+          <div class="flex items-center gap-2">
+            <button onclick="toggleMute()" title="ปิด/เปิดเสียง (M)" aria-label="ปิดหรือเปิดเสียง" class="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer">
+              <svg id="focus-icon-vol-on" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <path stroke-linecap="round" d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                <path stroke-linecap="round" d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+              </svg>
+              <svg id="focus-icon-vol-mute" class="w-4 h-4 hidden text-[var(--accent)]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <line x1="23" y1="9" x2="17" y2="15"></line>
+                <line x1="17" y1="9" x2="23" y2="15"></line>
+              </svg>
+            </button>
+
+            <input 
+              type="range" 
+              id="focus-volume-slider" 
+              min="0" 
+              max="100" 
+              value="30" 
+              oninput="changeVolume(this.value)"
+              aria-label="ระดับเสียงในโหมดเต็มจอ"
+              class="ena-slider w-24 sm:w-28 cursor-pointer"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- ฝั่งขวา: เนื้อเพลงขนาดใหญ่เลื่อนตามจังหวะ -->
+      <div id="focus-lyrics-col" class="lg:col-span-7 h-[34vh] sm:h-[42vh] lg:h-[58vh] flex flex-col">
+        <div 
+          id="focus-lyrics-display" 
+          class="flex-1 overflow-y-auto px-2 sm:px-4 py-6 text-base sm:text-lg leading-[2.1] xo-text-text-primary-95 whitespace-pre-line font-light scroll-smooth">
+          <!-- เนื้อเพลงซิงก์แสดงตรงนี้ -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- แถบล่างสุด: สถานะเสียงบรรยากาศ -->
+    <div class="relative z-10 flex items-center justify-between text-[11px] font-en tracking-[0.16em] xo-text-text-secondary-70">
+      <span>AMBIENT SCREEN MODE</span>
+      <span id="focus-ambient-status">AMBIENT MIXER · OFF</span>
+    </div>
+
+  </div>
   <!-- ==================== DRAGGABLE SETTINGS MODAL (รวมตั้งค่า + คีย์ลัด & คู่มือ) ==================== -->
   <div id="settings-modal-backdrop" onclick="closeSettingsModal()" class="hidden fixed inset-0 z-[60] bg-[#060B14]/50 backdrop-blur-sm transition-opacity"></div>
 
@@ -849,7 +1070,7 @@
     </div>
 
     <!-- ==================== แท็บที่ 1: ตั้งค่าทั่วไป ==================== -->
-    <div id="settings-panel-general" class="p-5 space-y-5">
+    <div id="settings-panel-general" class="p-5 space-y-5 max-h-[68vh] overflow-y-auto">
       <!-- โหมดหน้าจอ (Dark / Light) -->
       <div class="space-y-2.5">
         <div class="flex items-center justify-between">
@@ -901,6 +1122,94 @@
           </button>
         </div>
       </div>
+
+      <div class="border-t border-[var(--border-subtle)]"></div>
+
+      <!-- เสียงบรรยากาศซ้อนทับ (Ambient Sound Mixer) -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-en tracking-[0.18em] uppercase text-[var(--text-secondary)]">Ambient Mixer</span>
+          <button 
+            onclick="stopAllAmbientMixer()" 
+            class="text-[10px] font-en text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors cursor-pointer">
+            ปิดเสียงทั้งหมด
+          </button>
+        </div>
+        <p class="text-xs xo-text-text-secondary-80 font-light leading-relaxed">
+          เปิดเสียงบรรยากาศคลอไปพร้อมกับเพลงที่กำลังฟัง (ปรับความดังแยกอิสระ)
+        </p>
+
+        <div class="space-y-2.5 pt-1">
+          <!-- 1. เสียงฝนตก (Rain) -->
+          <div class="p-3 rounded-xl border border-[var(--border-subtle)] xo-bg-surface-elevated-30 space-y-2">
+            <div class="flex items-center justify-between">
+              <button 
+                id="amb-btn-rain"
+                onclick="toggleAmbientLayer('rain')" 
+                aria-pressed="false"
+                class="flex items-center gap-2 text-xs text-[var(--text-primary)] font-medium cursor-pointer">
+                <span id="amb-dot-rain" class="w-2 h-2 rounded-full bg-[var(--text-secondary)]/40 transition-colors"></span>
+                <span>ฝนพรำ · Soft Rain</span>
+              </button>
+              <span id="amb-val-rain" class="text-[10px] font-en text-[var(--text-secondary)]">0%</span>
+            </div>
+            <input 
+              type="range" 
+              id="amb-slider-rain" 
+              min="0" max="100" value="0" 
+              oninput="setAmbientLayerVolume('rain', this.value)"
+              aria-label="ระดับเสียงฝนพรำ"
+              class="ena-slider w-full cursor-pointer"
+            />
+          </div>
+
+          <!-- 2. เสียงคลื่นทะเล (Waves) -->
+          <div class="p-3 rounded-xl border border-[var(--border-subtle)] xo-bg-surface-elevated-30 space-y-2">
+            <div class="flex items-center justify-between">
+              <button 
+                id="amb-btn-waves"
+                onclick="toggleAmbientLayer('waves')" 
+                aria-pressed="false"
+                class="flex items-center gap-2 text-xs text-[var(--text-primary)] font-medium cursor-pointer">
+                <span id="amb-dot-waves" class="w-2 h-2 rounded-full bg-[var(--text-secondary)]/40 transition-colors"></span>
+                <span>คลื่นทะเล · Ocean Waves</span>
+              </button>
+              <span id="amb-val-waves" class="text-[10px] font-en text-[var(--text-secondary)]">0%</span>
+            </div>
+            <input 
+              type="range" 
+              id="amb-slider-waves" 
+              min="0" max="100" value="0" 
+              oninput="setAmbientLayerVolume('waves', this.value)"
+              aria-label="ระดับเสียงคลื่นทะเล"
+              class="ena-slider w-full cursor-pointer"
+            />
+          </div>
+
+          <!-- 3. เสียงแผ่นเสียงไวนิล (Vinyl Crackle) -->
+          <div class="p-3 rounded-xl border border-[var(--border-subtle)] xo-bg-surface-elevated-30 space-y-2">
+            <div class="flex items-center justify-between">
+              <button 
+                id="amb-btn-vinyl"
+                onclick="toggleAmbientLayer('vinyl')" 
+                aria-pressed="false"
+                class="flex items-center gap-2 text-xs text-[var(--text-primary)] font-medium cursor-pointer">
+                <span id="amb-dot-vinyl" class="w-2 h-2 rounded-full bg-[var(--text-secondary)]/40 transition-colors"></span>
+                <span>แผ่นเสียงไวนิล · Vinyl Crackle</span>
+              </button>
+              <span id="amb-val-vinyl" class="text-[10px] font-en text-[var(--text-secondary)]">0%</span>
+            </div>
+            <input 
+              type="range" 
+              id="amb-slider-vinyl" 
+              min="0" max="100" value="0" 
+              oninput="setAmbientLayerVolume('vinyl', this.value)"
+              aria-label="ระดับเสียงแผ่นเสียงไวนิล"
+              class="ena-slider w-full cursor-pointer"
+            />
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ==================== แท็บที่ 2: คีย์ลัด & คู่มือการใช้งาน (ไม่รวมคีย์ลับ) ==================== -->
@@ -945,6 +1254,10 @@
             <kbd class="px-2.5 py-0.5 rounded bg-[var(--bg)] border border-[var(--border-subtle)] font-en text-[var(--accent)] font-semibold">L</kbd>
           </div>
           <div class="flex items-center justify-between py-2.5">
+            <span class="text-[var(--text-secondary)]">เปิด / ปิดโหมดจดจ่อเต็มจอ (Focus)</span>
+            <kbd class="px-2.5 py-0.5 rounded bg-[var(--bg)] border border-[var(--border-subtle)] font-en text-[var(--accent)] font-semibold">F</kbd>
+          </div>
+          <div class="flex items-center justify-between py-2.5">
             <span class="text-[var(--text-secondary)]">เลือกการ์ดเพลง / กดปุ่มหัวใจ</span>
             <div class="flex items-center gap-1">
               <kbd class="px-2 py-0.5 rounded bg-[var(--bg)] border border-[var(--border-subtle)] font-en text-[var(--accent)] font-semibold">Tab</kbd>
@@ -956,7 +1269,7 @@
             <kbd class="px-2.5 py-0.5 rounded bg-[var(--bg)] border border-[var(--border-subtle)] font-en text-[var(--accent)] font-semibold">?</kbd>
           </div>
           <div class="flex items-center justify-between py-2.5">
-            <span class="text-[var(--text-secondary)]">ปิดหน้าต่างตั้งค่า</span>
+            <span class="text-[var(--text-secondary)]">ปิดหน้าต่างตั้งค่า / ออกจากเต็มจอ</span>
             <kbd class="px-2.5 py-0.5 rounded bg-[var(--bg)] border border-[var(--border-subtle)] font-en text-[var(--accent)] font-semibold">Esc</kbd>
           </div>
         </div>
@@ -969,7 +1282,7 @@
           <div class="p-3 rounded-xl border border-[var(--border-subtle)] xo-bg-surface-elevated-30 space-y-0.5">
             <div class="font-medium text-[var(--text-primary)]">คลิกเนื้อเพลงเพื่อกระโดดท่อน</div>
             <p class="text-[11px] text-[var(--text-secondary)] font-light leading-relaxed">
-              เปิดแผงเนื้อเพลงด้านขวา แล้วคลิกที่บรรทัดที่ต้องการเพื่อย้อนฟังท่อนนั้นทันที
+              เปิดแผงเนื้อเพลงด้านขวา หรือเข้าโหมดจดจ่อเต็มจอ แล้วคลิกที่บรรทัดที่ต้องการเพื่อย้อนฟังท่อนนั้นทันที
             </p>
           </div>
           <div class="p-3 rounded-xl border border-[var(--border-subtle)] xo-bg-surface-elevated-30 space-y-0.5">
